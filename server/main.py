@@ -1,3 +1,4 @@
+# Description: Main entry point for the server. Starts the WebSocket server and listens for incoming requests.
 import asyncio
 from modules.api.main import WebSocketAPI
 from modules.controller.main import Controller

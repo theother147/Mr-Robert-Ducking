@@ -7,9 +7,9 @@
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
-            "python":"${workspaceFolder}/.venv/Scripts/python.exe",
             "request": "launch",
             "program": "${workspaceFolder}/server/main.py",
+            "python":"${workspaceFolder}/.venv/Scripts/python.exe",
             "console": "integratedTerminal"
         }
     ]

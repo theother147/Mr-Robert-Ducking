@@ -1,3 +1,4 @@
+# Description: Controller module for handling new requests from clients.
 from typing import Any
 from modules.utils.logger import logger
 

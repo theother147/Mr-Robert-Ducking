@@ -3,10 +3,12 @@ import websockets
 import json
 from uuid import uuid4
 
+#type hinting
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Callable, Optional
 from contextlib import asynccontextmanager
 
+#custom imports
 from modules.config.config import Config 
 from modules.utils.logger import logger
 
@@ -107,6 +109,7 @@ class WebSocketAPI:
             "message": message,
             "session_id": session_id
         })
+        logger.error(f"Sending error response: {response}")
         await websocket.send(response)
 
     async def send_acknowledgement(self, websocket: websockets.WebSocketServerProtocol, message: str, session_id: str) -> None:
@@ -115,6 +118,7 @@ class WebSocketAPI:
             "message": message,
             "session_id": session_id
         })
+        logger.info(f"Sending acknowledgement response: {response}")
         await websocket.send(response)
 
     @asynccontextmanager
