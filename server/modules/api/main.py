@@ -1,3 +1,4 @@
+# Description: This module is responsible for handling the WebSocket API. It creates a WebSocket server and listens for incoming connections. It also provides methods to save audio and text data received from the clients and notify the controller about the received data.
 import asyncio
 import websockets
 import json

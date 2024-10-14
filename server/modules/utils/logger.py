@@ -1,4 +1,4 @@
-# This file is used to log the information of the server
+# Description: Logger module for logging messages.
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
