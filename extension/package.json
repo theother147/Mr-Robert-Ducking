@@ -1,0 +1,44 @@
+{
+  "name": "rubberduck",
+  "displayName": "rubberduck",
+  "description": "Rubber Duck AI Assistant",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.94.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "rubberduck.openWebview",
+        "title": "Open Rubber Duck Webview"
+      },
+      {
+        "command": "rubberduck.sendMessage",
+        "title": "Send message to WebSocket"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.8",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.94.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.11.1"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
