@@ -164,3 +164,7 @@ cython_debug/
 
 # VS Code
 .vscode/
+
+# Node.js Tools for Visual Studio
+.ntvs_analysis.dat
+node_modules/
