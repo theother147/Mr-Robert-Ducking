@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 #custom imports
 from modules.config.config import Config 
 from modules.utils.logger import logger
-
+from modules.controller.main import controller
 
 @dataclass
 class Session:
@@ -23,6 +23,7 @@ class Session:
 class WebSocketAPI:
     def __init__(self, controller_callback: Callable[[str, str, Any], None]):
         self.sessions: Dict[str, Session] = {}
+        self.controller = controller
         self.controller_callback = controller_callback
         self.server: Optional[websockets.WebSocketServer] = None
 
@@ -34,18 +35,21 @@ class WebSocketAPI:
     def get_session(self, session_id: str) -> Optional[Session]:
         return self.sessions.get(session_id)
 
+    @controller.send(event="audiofile_received")
     def save_audio_data(self, session_id: str, audio_chunk: bytes) -> None:
         session = self.get_session(session_id)
         if session:
             session.audio_data.append(audio_chunk)
-            self._notify_controller(session_id, "audio", audio_chunk)
+            return(session_id, "audio", audio_chunk)
         else:
             raise ValueError(f"Session {session_id} not found.")
-
+        
+    @controller.send(event="message_received")
     def save_message(self, session_id: str, message: str) -> None:
         session = self.get_session(session_id)
         if session:
             session.messages.append(message)
+            return(session_id, message)
             self._notify_controller(session_id, "message", message)
         else:
             raise ValueError(f"Session {session_id} not found.")

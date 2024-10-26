@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/server/main.py",
-            "python":"${workspaceFolder}/.venv/Scripts/python.exe",
+            "python":"${workspaceFolder}/.venv/bin/python",
             "console": "integratedTerminal"
         }
     ]
