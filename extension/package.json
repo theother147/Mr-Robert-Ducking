@@ -13,32 +13,47 @@
     "onStartupFinished"
   ],
   "main": "./extension.js",
+  "files": [
+    "webview/**/*"
+  ],
   "contributes": {
+    "viewsContainers": {
+        "activitybar": [
+            {
+                "id": "rubberduck",
+                "title": "Rubber Duck AI Assistant",
+                "icon": "resources/rubberduck_icon.svg"
+            }
+        ]
+    },
+    "views": {
+        "rubberduck": [
+            {
+                "type": "webview",
+                "id": "rubberduck.view",
+                "name": "Rubber Duck AI Assistant"
+            }
+        ]
+    },
     "commands": [
-      {
-        "command": "rubberduck.openWebview",
-        "title": "Open Rubber Duck Webview"
-      },
-      {
-        "command": "rubberduck.sendMessage",
-        "title": "Send message to WebSocket"
-      }
-    ]
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.8",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.94.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "eslint": "^9.11.1"
-  },
-  "dependencies": {
-    "ws": "^8.18.0"
+        {
+            "command": "rubberduck.openWebview",
+            "title": "Open Rubber Duck Webview"
+        },
+        {
+            "command": "rubberduck.sendMessage",
+            "title": "Send message to WebSocket"
+        }
+    ],
+    "configuration": {
+        "title": "Rubber Duck",
+        "properties": {
+            "rubberduck.webSocketUrl": {
+                "type": "string",
+                "default": "ws://localhost:8765",
+                "description": "WebSocket server URL"
+            }
+        }
+    }
   }
 }
