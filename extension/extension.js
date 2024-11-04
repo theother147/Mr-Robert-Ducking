@@ -1,6 +1,8 @@
 const vscode = require('vscode');
 const { connect_websocket, close_websocket, send_message_to_websocket } = require('./modules/websocket');
 const { ViewProvider } = require('./modules/webview/webview');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * @param {vscode.ExtensionContext} context

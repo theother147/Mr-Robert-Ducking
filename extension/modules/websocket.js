@@ -1,3 +1,5 @@
+// Description: Module to handle WebSocket connection
+
 const vscode = require('vscode');
 const WebSocket = require('ws');
 
@@ -19,7 +21,7 @@ function connect_websocket() {
     isConnecting = true;
     ws = new WebSocket(wsUrl);
 
-    // WebSocket event listeners
+    // Websocket event handlers
     // Handle WebSocket connection open
     ws.on('open', function open() {
         console.log('Connected to WebSocket server');

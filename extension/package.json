@@ -18,42 +18,45 @@
   ],
   "contributes": {
     "viewsContainers": {
-        "activitybar": [
-            {
-                "id": "rubberduck",
-                "title": "Rubber Duck AI Assistant",
-                "icon": "resources/rubberduck_icon.svg"
-            }
-        ]
+      "activitybar": [
+        {
+          "id": "rubberduck",
+          "title": "Rubber Duck AI Assistant",
+          "icon": "resources/rubberduck_icon.svg"
+        }
+      ]
     },
     "views": {
-        "rubberduck": [
-            {
-                "type": "webview",
-                "id": "rubberduck.view",
-                "name": "Rubber Duck AI Assistant"
-            }
-        ]
+      "rubberduck": [
+        {
+          "type": "webview",
+          "id": "rubberduck.view",
+          "name": "Rubber Duck AI Assistant"
+        }
+      ]
     },
     "commands": [
-        {
-            "command": "rubberduck.openWebview",
-            "title": "Open Rubber Duck Webview"
-        },
-        {
-            "command": "rubberduck.sendMessage",
-            "title": "Send message to WebSocket"
-        }
+      {
+        "command": "rubberduck.openWebview",
+        "title": "Open Rubber Duck Webview"
+      },
+      {
+        "command": "rubberduck.sendMessage",
+        "title": "Send message to WebSocket"
+      }
     ],
     "configuration": {
-        "title": "Rubber Duck",
-        "properties": {
-            "rubberduck.webSocketUrl": {
-                "type": "string",
-                "default": "ws://localhost:8765",
-                "description": "WebSocket server URL"
-            }
+      "title": "Rubber Duck",
+      "properties": {
+        "rubberduck.webSocketUrl": {
+          "type": "string",
+          "default": "ws://localhost:8765",
+          "description": "WebSocket server URL"
         }
+      }
     }
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
   }
 }
