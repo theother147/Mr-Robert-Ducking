@@ -59,3 +59,19 @@ body {
 .actionButton:hover {
     background: var(--vscode-button-hoverBackground);
 }
+
+/* Add to styles.css */
+.speech-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.speech-indicator.active {
+    color: #00ff00;
+}

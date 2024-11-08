@@ -43,6 +43,10 @@
       {
         "command": "rubberduck.sendMessage",
         "title": "Send message to WebSocket"
+      },
+      {
+        "command": "rubberduck.startRecording",
+        "title": "Start Audio Recording"
       }
     ],
     "configuration": {
@@ -57,6 +61,7 @@
     }
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "child_process": "^1.0.2"
   }
 }

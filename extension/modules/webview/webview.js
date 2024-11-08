@@ -1,5 +1,4 @@
-// Description: This module is responsible for creating the webview that will be displayed in the sidebar.
-
+// Description: Webview provider for the rubber duck assistant
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
@@ -28,31 +27,21 @@ class ViewProvider {
                     case 'sendMessage':
                         vscode.commands.executeCommand('rubberduck.sendMessage', message.text);
                         break;
+                    case 'startRecording':
+                        vscode.commands.executeCommand('rubberduck.startRecording');
+                        break;
                 }
             },
             undefined,
             this.context.subscriptions
         );
-
-        // Handle messages from the WebSocket server
-        const webSocketMessageHandler = (message) => {
-            if (this._view?.webview) {
-                this._view.webview.postMessage({
-                    command: 'receiveMessage',
-                    text: message,
-                    sender: 'Server'
-                });
-            }
-        };
-        receive_message_from_websocket(webSocketMessageHandler);
     }
 
     _getWebviewContent() {
-        // Read the HTML file for the webview
         const webviewPath = path.join(this.context.extensionPath, 'modules', 'webview', 'index.html');
         let html = fs.readFileSync(webviewPath, 'utf8');
 
-        // Get the URIs for the scripts and styles
+        // Get URIs for scripts and styles
         const stylesUri = this._view.webview.asWebviewUri(vscode.Uri.file(
             path.join(this.context.extensionPath, 'modules', 'webview', 'styles.css')
         ));
@@ -60,7 +49,7 @@ class ViewProvider {
             path.join(this.context.extensionPath, 'modules', 'webview', 'scripts.js')
         ));
 
-        // Replace placeholders in the HTML with the URIs
+        // Replace placeholders
         html = html.replace('${scriptsUri}', scriptsUri.toString());
         html = html.replace('${stylesUri}', stylesUri.toString());
 
