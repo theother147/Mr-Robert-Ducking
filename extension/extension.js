@@ -26,8 +26,10 @@ function activate(context) {
         if (!recordingCommand) {
             recordingCommand = vscode.commands.registerCommand('rubberduck.startRecording', async () => {
                 try {
-                    const pythonPath = vscode.workspace.getConfiguration('python').get('pythonPath') || 'python';
-                    const scriptPath = path.join(context.extensionPath, 'python', 'audio_recorder_vad.py');
+                    const workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath;
+                    const venvPath = path.join(workspaceFolder, 'venv', 'bin', 'python');
+                    const pythonPath = fs.existsSync(venvPath) ? venvPath : (vscode.workspace.getConfiguration('python').get('pythonPath') || 'python');
+                    const scriptPath = path.join(context.extensionPath, 'python', 'main.py');
                     const recordingProcess = spawn(pythonPath, [scriptPath]);
                     
                     recordingProcess.stdout.on('data', (data) => {
