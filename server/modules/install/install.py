@@ -254,7 +254,7 @@ def install_ollama() -> bool:
 def check_and_install_model() -> bool:
     """Check if codellama model is installed, download if not."""
     try:
-        import ollama
+        import server.modules.install.core.ollama as ollama
 
         print("\nChecking for required AI model...")
         client = ollama.Client()
