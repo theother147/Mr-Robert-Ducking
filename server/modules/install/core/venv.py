@@ -42,7 +42,9 @@ class VenvManager:
         if not self.venv_path.exists():
             try:
                 venv.create(self.venv_path, with_pip=True)
+                # Install base packages first
                 self.run_in_venv([str(self.get_python_path()), "-m", "pip", "install", "-U", "pip"])
+                self.run_in_venv([str(self.get_python_path()), "-m", "pip", "install", "requests"])
                 self.run_in_venv([str(self.get_python_path()), "-m", "pip", "install", "ollama"])
             except Exception as e:
                 raise VenvError("Failed to create/setup virtual environment", str(e))

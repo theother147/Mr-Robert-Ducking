@@ -2,7 +2,10 @@
 from pathlib import Path
 import time
 from typing import Optional, Callable
-import requests
+import subprocess
+import sys
+import importlib
+import site
 from ..config import InstallerConfig
 from ..exceptions import DownloadError
 from .progress import ProgressBar
@@ -14,6 +17,17 @@ class Downloader:
         """Download file with progress tracking and retries."""
         config = InstallerConfig.DOWNLOAD_CONFIG
         attempts = 0
+        
+        # First ensure requests is installed in venv
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "requests"],
+            check=True,
+            capture_output=True
+        )
+        
+        # Now import requests from venv
+        importlib.reload(site)
+        import requests
         
         while attempts < config["retry_attempts"]:
             try:
