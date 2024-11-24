@@ -5,9 +5,10 @@ import json
 
 
 def main():
+    print("hello from python")
     server.run("0.0.0.0", 9090)
     result = client()
     print(result)
-    print("success")
+    
 
 main()

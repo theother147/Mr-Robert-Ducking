@@ -38,7 +38,7 @@ function activate(context) {
 							"python",
 							".venv",
 							"bin",
-							"python"
+							"python3"
 						);
 
 						const scriptPath = path.join(
@@ -46,10 +46,9 @@ function activate(context) {
 							"python",
 							"main.py"
 						);
-						const recordingProcess = spawn(pythonExecutablePath, [scriptPath]);
-						console.log("Recording process started");
+						const recordingProcess = spawn(pythonExecutablePath, ["-u", scriptPath]);
 						recordingProcess.stdout.on("data", (data) => {
-							vscode.window.showInformationMessage("yes");
+							vscode.window.showInformationMessage("success");
 							console.log("PYTHON SENT:", data.toString());
 							try {
 								const messages = data.toString().trim().split("\n");
