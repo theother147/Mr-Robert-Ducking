@@ -32,7 +32,6 @@ def install_requirements(python_executable):
     print("\nInstalling Python modules...")
     print()  # Add newline for progress bar
 
-    # Use a simple counter instead of tqdm initially
     success_count = 0
     for requirement in requirements:
         try:
@@ -66,52 +65,44 @@ def install_requirements(python_executable):
             return False
 
     print(f"\n✓ Successfully installed {success_count}/{total_modules} Python modules")
-    
-    # Now that tqdm is installed, we can import and use it for other operations
-    try:
-        subprocess.run([python_executable, '-m', 'pip', 'install', 'tqdm'], 
-                      stdout=subprocess.DEVNULL, 
-                      stderr=subprocess.DEVNULL)
-        return True
-    except Exception as e:
-        print(f"Failed to install tqdm: {e}")
-        return False
+    return True
 
 def download_with_progress(url: str, output_path: Path) -> bool:
     """Download a file with progress indication."""
     try:
-        # Import requests here after installation
-        import requests
-        from tqdm import tqdm
+        from urllib.request import urlopen
         
-        response = requests.get(url, stream=True, timeout=30)
-        response.raise_for_status()
-        total_size = int(response.headers.get('content-length', 0))
+        print("Downloading Ollama...")
+        with urlopen(url, timeout=30) as response:
+            total_size = int(response.headers.get('content-length', 0))
+            downloaded = 0
+            last_percent = 0
 
-        with open(output_path, 'wb') as file, tqdm(
-            desc="Downloading Ollama",
-            total=total_size,
-            unit='iB',
-            unit_scale=True,
-            unit_divisor=1024,
-        ) as pbar:
-            for data in response.iter_content(chunk_size=1024):
-                size = file.write(data)
-                pbar.update(size)
-        return True
+            with open(output_path, 'wb') as file:
+                while True:
+                    chunk = response.read(8192)  # 8KB chunks
+                    if not chunk:
+                        break
+                        
+                    size = file.write(chunk)
+                    downloaded += size
+                    
+                    # Update progress every 5%
+                    if total_size:
+                        percent = int((downloaded / total_size) * 100)
+                        if percent >= last_percent + 5:
+                            print(f"Progress: {percent}% ({downloaded}/{total_size} bytes)", end='\r')
+                            last_percent = percent
+                
+                print("\nDownload complete!    ")  # Extra spaces to clear previous line
+            return True
+            
     except Exception as e:
         print(f"\nDownload failed: {e}")
         return False
 
 def is_ollama_installed() -> Tuple[bool, str]:
-    """
-    Check if Ollama is installed by running 'ollama --version'.
-    
-    Returns:
-        Tuple[bool, str]: A tuple containing:
-            - Boolean indicating if Ollama is installed
-            - String with version information or error message
-    """
+    """Check if Ollama is installed by running 'ollama --version'."""
     try:
         result = subprocess.run(
             ["ollama", "--version"],
@@ -137,7 +128,7 @@ def install_ollama() -> bool:
     
     if is_installed:
         print(f"✓ Ollama is already installed: {message}")
-        return check_and_install_model()  # Continue with model installation
+        return check_and_install_model()
 
     print("Installing Ollama...")
 
@@ -147,27 +138,27 @@ def install_ollama() -> bool:
         download_url = "https://ollama.ai/download/OllamaSetup.exe"
 
         try:
-            print() # Add newline before progress bar
+            print()  # Add newline before progress bar
             if not download_with_progress(download_url, installer_path):
                 return False
 
             print("\nRunning installer...")
-            print() # Add newline before progress bar
-            with tqdm(total=1, desc="Installing") as pbar:
-                subprocess.run([str(installer_path), '/VERYSILENT', '/NORESTART'], check=True)
-                pbar.update(1)
+            print()  # Add newline for progress
+            print("Installing...", end='', flush=True)
+            subprocess.run([str(installer_path), '/VERYSILENT', '/NORESTART'], check=True)
+            print(" Done!")
 
             print("\nWaiting for installation to complete...")
             time.sleep(5)
 
             is_installed, message = is_ollama_installed()
-            
             if is_installed:
                 print(f"✓ Ollama installed: {message}")
-                return check_and_install_model()  # Continue with model installation
+                return check_and_install_model()
             else:
                 print("Please restart your terminal to complete Ollama installation.")
                 return False
+
         except Exception as e:
             print(f"Failed to install Ollama: {e}")
             return False
@@ -185,24 +176,23 @@ def install_ollama() -> bool:
             print("\nDownloading Ollama...")
             print()  # Add newline before progress bar
             
-            # Download with progress
             if not download_with_progress(download_url, zip_path):
                 return False
                 
             print("\nExtracting and installing Ollama.app...")
-            print()  # Add newline before progress bar
+            print()  # Add newline before progress
             
-            with tqdm(total=1, desc="Installing") as pbar:
-                # Extract .app to Applications
-                subprocess.run(["unzip", "-q", str(zip_path), "-d", "/Applications"], check=True)
-                
-                # Set permissions
-                subprocess.run(["xattr", "-dr", "com.apple.quarantine", "/Applications/Ollama.app"], check=True)
-                
-                # Start Ollama
-                subprocess.run(["open", "/Applications/Ollama.app"], check=True)
-                pbar.update(1)
-                
+            print("Installing...", end='', flush=True)
+            # Extract .app to Applications
+            subprocess.run(["unzip", "-q", str(zip_path), "-d", "/Applications"], check=True)
+            
+            # Set permissions
+            subprocess.run(["xattr", "-dr", "com.apple.quarantine", "/Applications/Ollama.app"], check=True)
+            
+            # Start Ollama
+            subprocess.run(["open", "/Applications/Ollama.app"], check=True)
+            print(" Done!")
+            
             print("\nWaiting for Ollama service to start...")
             time.sleep(5)  # Give some time for service to initialize
             
@@ -210,7 +200,7 @@ def install_ollama() -> bool:
             is_installed, message = is_ollama_installed()
             if is_installed:
                 print(f"\n✓ Ollama installed: {message}")
-                return True
+                return check_and_install_model()
             else:
                 print("\nInstallation completed but service not responding")
                 print("Please try starting Ollama.app manually")
@@ -222,33 +212,33 @@ def install_ollama() -> bool:
         finally:
             if zip_path.exists():
                 zip_path.unlink()
-                        
+                
     elif sys.platform.startswith('linux'):
         try:
             print("Installing Ollama using official install script...")
-            print() # Add newline before progress bar
+            print()  # Add newline before progress bar
             
-            with tqdm(total=1, desc="Installing") as pbar:
-                # Run curl install script
-                process = subprocess.Popen(
-                    "curl -fsSL https://ollama.com/install.sh | sh",
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
-                )
-                _, stderr = process.communicate()
+            print("Installing...", end='', flush=True)
+            # Run curl install script
+            process = subprocess.Popen(
+                "curl -fsSL https://ollama.com/install.sh | sh",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            _, stderr = process.communicate()
+            
+            if process.returncode != 0:
+                print(f"Installation failed: {stderr.decode()}")
+                return False
                 
-                if process.returncode != 0:
-                    print(f"Installation failed: {stderr.decode()}")
-                    return False
-                    
-                pbar.update(1)
+            print(" Done!")
 
             # Verify installation
             is_installed, message = is_ollama_installed()
             if is_installed:
                 print(f"\n✓ Ollama installed: {message}")
-                return check_and_install_model()  # Continue with model installation
+                return check_and_install_model()
             else:
                 print("\nInstallation may have failed or PATH needs to be updated")
                 print("Please try starting a new terminal session")
@@ -259,28 +249,6 @@ def install_ollama() -> bool:
             return False
     else:
         print(f"Unsupported platform: {sys.platform}")
-        return False
-
-def install_bootstrap_dependencies(python_executable: str) -> bool:
-    """Install the minimal dependencies needed for the installer to run."""
-    print("Installing essential dependencies...")
-    
-    bootstrap_modules = [
-        "tqdm",
-        "requests"
-    ]
-
-    try:
-        for module in bootstrap_modules:
-            print(f"Installing {module}...")
-            subprocess.check_call(
-                [python_executable, "-m", "pip", "install", module],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-        return True
-    except Exception as e:
-        print(f"Failed to install essential dependencies: {e}")
         return False
 
 def check_and_install_model() -> bool:
@@ -302,20 +270,17 @@ def check_and_install_model() -> bool:
                 print(f"Unexpected model list format: {type(models)}")
                 model_names = []
             
-            # Check if model exists before showing download message
             if 'codellama' in model_names:
                 print("✓ CodeLlama model already installed")
                 return True
             
-            # Only show download messages if model needs to be installed    
             print("\nDownloading CodeLlama model...")
             print("This may take a while depending on your internet connection...")
             print()  # Add newline before progress indicator
             
-            from tqdm import tqdm
-            with tqdm(desc="Downloading model") as pbar:
-                client.pull('codellama')
-                pbar.update(1)
+            print("Downloading model... (No progress available)", end='', flush=True)
+            client.pull('codellama')
+            print(" Done!")
             
             print("\n✓ CodeLlama model installed successfully")
             return True
@@ -332,11 +297,6 @@ def check_and_install_model() -> bool:
 def main():
     # First create venv and get its python executable
     python_executable = create_and_activate_venv()
-    
-    # Install bootstrap dependencies into venv
-    if not install_bootstrap_dependencies(python_executable):
-        print("Failed to install essential dependencies. Aborting.")
-        return False
         
     # Now install remaining requirements
     if not install_requirements(python_executable):
