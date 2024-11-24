@@ -1,9 +1,12 @@
 // Add to the top of scripts.js
 let speechIndicator;
+let wsStatusElement;
 
 // Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
     const vscode = acquireVsCodeApi();
+    
+    wsStatusElement = document.getElementById('wsStatus');
     
     // Add speech indicator element
     speechIndicator = document.createElement('div');
@@ -18,16 +21,36 @@ window.addEventListener('DOMContentLoaded', () => {
         const message = messageInput.value.trim();
         if (message) {
             appendMessage('You', message);
-            vscode.postMessage({ command: 'sendMessage', text: message });
             messageInput.value = '';
+            vscode.postMessage({ command: 'sendMessage', text: message });
         }
     }
 
     // Append a message to the chat history
-    function appendMessage(sender, text) {
+    function appendMessage(sender, text, failed = false) {
         const chatHistory = document.getElementById('chatHistory');
         const messageElement = document.createElement('div');
-        messageElement.textContent = `${sender}: ${text}`;
+        messageElement.className = failed ? 'message-failed' : '';
+
+        const messageContent = document.createElement('span');
+        messageContent.textContent = `${sender}: ${text}`;
+        messageElement.appendChild(messageContent);
+
+        if (failed) {
+            const retryButton = document.createElement('button');
+            retryButton.className = 'retry-button';
+            retryButton.textContent = 'Retry';
+            retryButton.onclick = () => {
+                retryButton.disabled = true;
+                vscode.postMessage({ 
+                    command: 'sendMessage', 
+                    text: text,
+                    isRetry: true 
+                });
+            };
+            messageElement.appendChild(retryButton);
+        }
+
         chatHistory.appendChild(messageElement);
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
@@ -81,6 +104,14 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'voiceActivity':
                 updateVoiceActivity(message.isSpeaking);
                 break;
+
+            case 'wsStatus':
+                update_websocket_status(message.connected);
+                break;
+
+            case 'sendFailed':
+                appendMessage('You', message.text, true);
+                break;
         }
     });
 
@@ -109,4 +140,10 @@ window.addEventListener('DOMContentLoaded', () => {
 function updateVoiceActivity(isSpeaking) {
     if (!speechIndicator) return;
     speechIndicator.className = `speech-indicator ${isSpeaking ? 'active' : ''}`;
+}
+
+function update_websocket_status(connected) {
+    if (!wsStatusElement) return;
+    wsStatusElement.textContent = connected ? 'Connected' : 'Disconnected';
+    wsStatusElement.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
 }

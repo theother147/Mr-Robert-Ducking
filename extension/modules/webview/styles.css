@@ -46,6 +46,7 @@ body {
     padding: 8px;
     gap: 8px;
     background: var(--vscode-editor-background);
+    position: relative;
 }
 
 .actionButton {
@@ -60,7 +61,6 @@ body {
     background: var(--vscode-button-hoverBackground);
 }
 
-/* Add to styles.css */
 .speech-indicator {
     width: 20px;
     height: 20px;
@@ -74,4 +74,22 @@ body {
 
 .speech-indicator.active {
     color: #00ff00;
+}
+
+.ws-status {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ws-status.connected {
+    color: var(--vscode-testing-iconPassed);
+}
+
+.ws-status.disconnected {
+    color: var(--vscode-testing-iconFailed);
 }

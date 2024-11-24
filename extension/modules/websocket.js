@@ -1,15 +1,31 @@
-// Description: Module to handle WebSocket connection
+// Description: Module for handling WebSocket communication
 
 const vscode = require('vscode');
 const WebSocket = require('ws');
 
-let ws;
-let isConnecting = false; // Flag to track connection status
+let ws; // WebSocket instance
+let isConnecting = false; // Flag to indicate if WebSocket is connecting
+let provider; // Reference to webview provider
 
-// Get the WebSocket URL from the configuration
+// Get WebSocket URL from the configuration (package.json)
 const wsUrl = vscode.workspace.getConfiguration('rubberduck').get('webSocketUrl', 'ws://localhost:8765');
 
-// Connect to the WebSocket server
+// Share webview provider with WebSocket module
+function set_provider(viewProvider) {
+    provider = viewProvider;
+}
+
+// Notify webview about the connection status
+function notify_connection_status(connected) {
+    if (provider && provider._view) {
+        provider._view.webview.postMessage({
+            command: 'wsStatus',
+            connected: connected
+        });
+    }
+}
+
+// WebSocket connection and event handlers
 function connect_websocket() {
 
     // Check if WebSocket is already connected
@@ -17,47 +33,50 @@ function connect_websocket() {
         return; // Prevent multiple connections
     }
 
-    // Set the flag to indicate that the WebSocket is connecting
-    isConnecting = true;
-    ws = new WebSocket(wsUrl);
+    isConnecting = true; // Set the flag to indicate that the WebSocket is connecting
+    ws = new WebSocket(wsUrl); // Create a new WebSocket instance
 
     // Websocket event handlers
-    // Handle WebSocket connection open
     ws.on('open', function open() {
         console.log('Connected to WebSocket server');
         isConnecting = false;
+        notify_connection_status(true);
     });
 
-    // Handle WebSocket connection close
-    ws.on('close', function close() {
-        console.log('WebSocket connection closed');
-        isConnecting = false;
-        reconnect_websocket();
-    });
-
-    // Handle messages from the WebSocket server
     ws.on('message', function message(data) {
         // Convert Buffer to string
         const messageString = data.toString();
 
         // Try to parse the string as JSON
-        let message;
         try {
-            message = JSON.parse(messageString);
+            const message = JSON.parse(messageString);
+            console.log('Received response from server:', message);
+            
+            // Send to webview
+            if (provider && provider._view) {
+                provider._view.webview.postMessage({
+                    command: 'receiveMessage',
+                    sender: 'Assistant',
+                    text: message.message
+                });
+            }
         } catch (error) {
             console.error('Failed to parse message as JSON:', error);
-            message = messageString; // Fallback to raw string if parsing fails
         }
-
-        // Log the actual message
-        console.log('Received response from server:', message);
     });
 
-    // Handle WebSocket errors
+    ws.on('close', function close() {
+        console.log('WebSocket connection closed');
+        isConnecting = false;
+        notify_connection_status(false);
+        reconnect_websocket();
+    });
+
     ws.on('error', function error(error) {
         console.error('WebSocket error:', error);
         isConnecting = false;
-        reconnect_websocket(); // Reconnect to WebSocket server
+        notify_connection_status(false);
+        reconnect_websocket();
     });
 }
 
@@ -88,7 +107,14 @@ function receive_message_from_websocket(messageHandler) {
         ws.on('message', function message(response) {
             try {
                 const parsedMessage = JSON.parse(response);
-                messageHandler(parsedMessage.message);
+                // Send to webview via provider
+                if (provider && provider._view) {
+                    provider._view.webview.postMessage({
+                        command: 'receiveMessage',
+                        sender: 'Assistant',
+                        text: parsedMessage.message
+                    });
+                }
             } catch (error) {
                 console.error('Failed to parse WebSocket message:', error);
             }
@@ -107,5 +133,6 @@ module.exports = {
     connect_websocket,
     close_websocket,
     send_message_to_websocket,
-    receive_message_from_websocket
+    receive_message_from_websocket,
+    set_provider
 };

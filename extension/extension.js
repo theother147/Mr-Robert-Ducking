@@ -1,5 +1,5 @@
 const vscode = require('vscode');
-const { connect_websocket, close_websocket, send_message_to_websocket } = require('./modules/websocket');
+const { connect_websocket, close_websocket, send_message_to_websocket, set_provider } = require('./modules/websocket');
 const { ViewProvider } = require('./modules/webview/webview');
 const fs = require('fs');
 const path = require('path');
@@ -13,16 +13,34 @@ let recordingCommand;
  */
 function activate(context) {
     try {
-        // Connect to WebSocket server
-        connect_websocket();
+        provider = new ViewProvider(context); // Initialize  webview provider
+        set_provider(provider); // Share provider with WebSocket module
+        connect_websocket(); // Connect to WebSocket server
 
-        // Register the view provider
-        provider = new ViewProvider(context);
+        // Register the webview provider to create UI
         context.subscriptions.push(
             vscode.window.registerWebviewViewProvider('rubberduck.view', provider)
         );
 
-        // Only register command if not already registered
+        // Register command to send messages to WebSocket server
+        let sendMessageCommand = vscode.commands.registerCommand('rubberduck.sendMessage', (text) => {
+            try {
+                send_message_to_websocket(text);
+                // Response is handled by receive_message_from_websocket
+            } catch (error) {
+                // Show error message in case of failure
+                vscode.window.showErrorMessage(`Failed to send message: ${error.message}`);
+                if (provider && provider._view) {
+                    provider._view.webview.postMessage({
+                        command: 'sendFailed',
+                        text: text
+                    });
+                }
+            }
+        });
+        context.subscriptions.push(sendMessageCommand);
+
+        // Register recording command (existing code)
         if (!recordingCommand) {
             recordingCommand = vscode.commands.registerCommand('rubberduck.startRecording', async () => {
                 try {
