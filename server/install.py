@@ -1,15 +1,12 @@
 import subprocess
 import sys
 import os
-import requests
 import time
-import venv
 from pathlib import Path
-import platform
 from typing import Tuple
-from tqdm import tqdm
 
 def create_and_activate_venv():
+    import venv
     venv_path = Path(".venv")
     if not venv_path.exists():
         print("Creating virtual environment...")
@@ -21,6 +18,8 @@ def create_and_activate_venv():
     return str(python_executable)
 
 def install_requirements(python_executable):
+    from tqdm import tqdm  # Import after bootstrap
+    
     try:
         with open('requirements.txt', 'r') as f:
             requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
@@ -165,39 +164,72 @@ def install_ollama() -> bool:
     elif sys.platform.startswith('linux'):
         try:
             print("Installing Ollama using official install script...")
-            install_command = ["curl", "-fsSL", "https://ollama.com/install.sh"]
-            shell_command = ["sh"]
+            print() # Add newline before progress bar
             
-            # Run curl and pipe to sh
-            curl_process = subprocess.Popen(install_command, stdout=subprocess.PIPE)
-            shell_process = subprocess.Popen(shell_command, stdin=curl_process.stdout)
-            
-            # Wait for completion
-            curl_process.stdout.close()
-            shell_process.communicate()
-            
-            if shell_process.returncode != 0:
-                print("Installation failed")
-                return False
+            with tqdm(total=1, desc="Installing") as pbar:
+                # Run curl install script
+                process = subprocess.Popen(
+                    "curl -fsSL https://ollama.com/install.sh | sh",
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                _, stderr = process.communicate()
+                
+                if process.returncode != 0:
+                    print(f"Installation failed: {stderr.decode()}")
+                    return False
+                    
+                pbar.update(1)
 
             # Verify installation
             is_installed, message = is_ollama_installed()
             if is_installed:
-                print(f"✓ Ollama installed: {message}")
+                print(f"\n✓ Ollama installed: {message}")
                 return True
             else:
-                print("Installation may have failed or PATH needs to be updated")
+                print("\nInstallation may have failed or PATH needs to be updated")
                 print("Please try starting a new terminal session")
                 return False
-                
+
         except Exception as e:
-            print(f"Failed to install Ollama: {e}")
+            print(f"\nFailed to install Ollama: {e}")
             return False
     else:
         print(f"Unsupported platform: {sys.platform}")
         return False
 
+def install_bootstrap_dependencies():
+    """Install the minimal dependencies needed for the installer to run."""
+    print("Installing essential dependencies...")
+    
+    bootstrap_modules = [
+        "tqdm",
+        "requests"
+    ]
+
+    try:
+        for module in bootstrap_modules:
+            try:
+                __import__(module)
+                continue
+            except ImportError:
+                print(f"Installing {module}...")
+                subprocess.check_call(
+                    [sys.executable, "-m", "pip", "install", module],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+        return True
+    except Exception as e:
+        print(f"Failed to install essential dependencies: {e}")
+        return False
+
 def main():
+    if not install_bootstrap_dependencies():
+        print("Failed to install essential dependencies. Aborting.")
+        return False
+        
     python_executable = create_and_activate_venv()
     if not install_requirements(python_executable):
         sys.exit(1)
