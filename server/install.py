@@ -20,8 +20,7 @@ def create_and_activate_venv() -> str:
     return str(python_executable)
 
 def install_requirements(python_executable):
-    from tqdm import tqdm  # Import after bootstrap
-    
+    """Install requirements from requirements.txt into virtual environment."""
     try:
         with open('requirements.txt', 'r') as f:
             requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
@@ -32,43 +31,51 @@ def install_requirements(python_executable):
     total_modules = len(requirements)
     print("\nInstalling Python modules...")
     print()  # Add newline for progress bar
-    
-    with tqdm(total=total_modules, desc="Installing modules", unit="module") as pbar:
-        for requirement in requirements:
-            try:
-                module_name = requirement.split('==')[0].split('>=')[0].split('<=')[0].strip()
 
-                # Check if module is already installed
-                check_result = subprocess.run(
-                    [python_executable, '-m', 'pip', 'show', module_name],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-                if check_result.returncode == 0:
-                    pbar.set_description(f"Already installed: {module_name}")
-                    pbar.update(1)
-                    continue
+    # Use a simple counter instead of tqdm initially
+    success_count = 0
+    for requirement in requirements:
+        try:
+            module_name = requirement.split('==')[0].split('>=')[0].split('<=')[0].strip()
+            print(f"Installing {module_name}...")
 
-                # Install module
-                pbar.set_description(f"Installing {requirement}")
-                install_result = subprocess.run(
-                    [python_executable, '-m', 'pip', 'install', requirement],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-                
-                if install_result.returncode != 0:
-                    print(f"\nFailed to install {requirement}")
-                    return False
-                    
-                pbar.update(1)
-                
-            except Exception as e:
-                print(f"\nError installing {requirement}: {e}")
-                return False
+            # Check if module is already installed
+            check_result = subprocess.run(
+                [python_executable, '-m', 'pip', 'show', module_name],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if check_result.returncode == 0:
+                print(f"Already installed: {module_name}")
+                success_count += 1
+                continue
+
+            # Install module
+            install_result = subprocess.run(
+                [python_executable, '-m', 'pip', 'install', requirement],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if install_result.returncode == 0:
+                success_count += 1
+            else:
+                print(f"Failed to install {requirement}")
+
+        except Exception as e:
+            print(f"Error installing {requirement}: {e}")
+            return False
+
+    print(f"\n✓ Successfully installed {success_count}/{total_modules} Python modules")
     
-    print("\n✓ All Python modules installed successfully")
-    return True
+    # Now that tqdm is installed, we can import and use it for other operations
+    try:
+        subprocess.run([python_executable, '-m', 'pip', 'install', 'tqdm'], 
+                      stdout=subprocess.DEVNULL, 
+                      stderr=subprocess.DEVNULL)
+        return True
+    except Exception as e:
+        print(f"Failed to install tqdm: {e}")
+        return False
 
 def download_with_progress(url: str, output_path: Path) -> bool:
     try:
