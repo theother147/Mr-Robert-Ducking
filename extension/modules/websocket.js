@@ -6,6 +6,8 @@ const WebSocket = require('ws');
 let ws; // WebSocket instance
 let isConnecting = false; // Flag to indicate if WebSocket is connecting
 let provider; // Reference to webview provider
+let messageQueue = []; // Queue for messages that failed to send
+const MAX_RETRIES = 2; // Maximum number of retries for sending messages
 
 // Get WebSocket URL from the configuration (package.json)
 const wsUrl = vscode.workspace.getConfiguration('rubberduck').get('webSocketUrl', 'ws://localhost:8765');
@@ -36,15 +38,21 @@ function connect_websocket() {
     isConnecting = true; // Set the flag to indicate that the WebSocket is connecting
     ws = new WebSocket(wsUrl); // Create a new WebSocket instance
 
-    // Websocket event handlers
-    ws.on('open', function open() {
+    // WebSocket event handlers
+    ws.on('open', async function open() {
         console.log('Connected to WebSocket server');
         isConnecting = false;
         notify_connection_status(true);
+
+        // Attempt to send any queued messages
+        messageQueue.forEach(async (queuedMessage) => {
+            await send_message_to_websocket(queuedMessage.text);
+        });
     });
 
+    // Handle incoming messages from the WebSocket server
     ws.on('message', function message(data) {
-        // Convert Buffer to string
+        // Convert buffer to string
         const messageString = data.toString();
 
         // Try to parse the string as JSON
@@ -56,7 +64,7 @@ function connect_websocket() {
             if (provider && provider._view) {
                 provider._view.webview.postMessage({
                     command: 'receiveMessage',
-                    sender: 'Assistant',
+                    sender: 'Rubber Duck',
                     text: message.message
                 });
             }
@@ -88,16 +96,54 @@ function reconnect_websocket() {
     }, 5000); // Reconnect after 5 seconds
 }
 
-// Send message to WebSocket server
-function send_message_to_websocket(message) {
+// Handle message sending with retries
+async function send_message_retry(messageData, retryCount = 0) {
     if (ws && ws.readyState === WebSocket.OPEN) {
-        var messageData = {
-            type: "text",
-            message: message
-        };
-        ws.send(JSON.stringify(messageData));
-    } else {
-        console.error('WebSocket is not connected');
+        try {
+            ws.send(JSON.stringify(messageData));
+            // If message sent successfully, remove from queue
+            messageQueue = messageQueue.filter(m => m.text !== messageData.message);
+            return true;
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        }
+    }
+
+    // Use message queue if there are more retries left
+    if (retryCount < MAX_RETRIES) {
+        console.log(`Retry attempt ${retryCount + 1} for message: ${messageData.message}`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return send_message_retry(messageData, retryCount + 1);
+    }
+
+    // Clear message from queue when there are no retries left
+    messageQueue = messageQueue.filter(m => m.text !== messageData.message);
+    return false;
+}
+
+// Send message to WebSocket server
+async function send_message_to_websocket(message) {
+    const messageData = {
+        type: "text",
+        message: message
+    };
+
+    // Check if message is already in queue
+    if (!messageQueue.find(m => m.text === message)) {
+        messageQueue.push({text: message, attempts: 0});
+    }
+
+    const success = await send_message_retry(messageData);
+    
+    if (!success) {
+        // If all retries failed, notify the webview
+        if (provider && provider._view) {
+            provider._view.webview.postMessage({
+                command: 'sendFailed',
+                text: message
+            });
+        }
+        console.error('Failed to send message after retries');
     }
 }
 
@@ -111,7 +157,7 @@ function receive_message_from_websocket(messageHandler) {
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: 'receiveMessage',
-                        sender: 'Assistant',
+                        sender: 'Rubber Duck',
                         text: parsedMessage.message
                     });
                 }
@@ -122,7 +168,7 @@ function receive_message_from_websocket(messageHandler) {
     }
 }
 
-// Close the WebSocket connection
+// Close WebSocket connection
 function close_websocket() {
     if (ws) {
         ws.close();

@@ -1,4 +1,4 @@
-// Description: Webview provider for the rubber duck assistant
+// Description: Webview provider for the extension
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
@@ -10,17 +10,22 @@ class ViewProvider {
         this._view = null;
     }
 
+    // Create the webview
     resolveWebviewView(webviewView) {
         this._view = webviewView;
+
+        // Set webview options
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [
                 vscode.Uri.file(path.join(this.context.extensionPath, 'modules', 'webview'))
             ]
         };
-        webviewView.webview.html = this._getWebviewContent();
 
-        // Handle messages from the webview
+        // Load webview HTML content
+        webviewView.webview.html = this._get_webview_content();
+
+        // Handle messages from webview
         webviewView.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
@@ -37,7 +42,8 @@ class ViewProvider {
         );
     }
 
-    _getWebviewContent() {
+    // HTML content for the webview
+    _get_webview_content() {
         const webviewPath = path.join(this.context.extensionPath, 'modules', 'webview', 'index.html');
         let html = fs.readFileSync(webviewPath, 'utf8');
 

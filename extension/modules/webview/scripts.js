@@ -8,32 +8,40 @@ window.addEventListener('DOMContentLoaded', () => {
     
     wsStatusElement = document.getElementById('wsStatus');
     
-    // Add speech indicator element
+    /* // Add speech indicator element
     speechIndicator = document.createElement('div');
     speechIndicator.id = 'speechIndicator';
     speechIndicator.className = 'speech-indicator';
     speechIndicator.textContent = '●';
-    document.getElementById('buttonContainer').appendChild(speechIndicator);
+    document.getElementById('buttonContainer').appendChild(speechIndicator); */
     
     // Send a message to the extension
-    function sendMessage() {
+    function send_message() {
         const messageInput = document.getElementById('message');
         const message = messageInput.value.trim();
         if (message) {
-            appendMessage('You', message);
+            // Disable all previous retry buttons when sending a new message
+            disable_retry_buttons();
+            append_message('You', message);
             messageInput.value = '';
             vscode.postMessage({ command: 'sendMessage', text: message });
         }
     }
 
     // Append a message to the chat history
-    function appendMessage(sender, text, failed = false) {
+    function append_message(sender, text, failed = false) {
         const chatHistory = document.getElementById('chatHistory');
         const messageElement = document.createElement('div');
         messageElement.className = failed ? 'message-failed' : '';
 
         const messageContent = document.createElement('span');
-        messageContent.textContent = `${sender}: ${text}`;
+        // Show different text for failed messages
+        if (failed) {
+            messageContent.textContent = 'Failed to send message';
+            messageContent.className = 'failed-message-text';
+        } else {
+            messageContent.textContent = `${sender}: ${text}`;
+        }
         messageElement.appendChild(messageContent);
 
         if (failed) {
@@ -42,6 +50,7 @@ window.addEventListener('DOMContentLoaded', () => {
             retryButton.textContent = 'Retry';
             retryButton.onclick = () => {
                 retryButton.disabled = true;
+                // Pass the original text in the retry attempt
                 vscode.postMessage({ 
                     command: 'sendMessage', 
                     text: text,
@@ -56,11 +65,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Send a message when the send button is clicked or Enter is pressed
-    document.getElementById('sendButton').addEventListener('click', sendMessage);
+    document.getElementById('sendButton').addEventListener('click', send_message);
     document.getElementById('message').addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            sendMessage();
+            send_message();
         }
     });
 
@@ -76,7 +85,7 @@ window.addEventListener('DOMContentLoaded', () => {
         
         switch(message.command) {
             case 'receiveMessage':
-                appendMessage(message.sender, message.text);
+                append_message(message.sender, message.text);
                 break;
                 
             case 'updateStatus':
@@ -86,7 +95,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 break;
                 
             case 'receiveTranscription':
-                appendMessage('Transcription', message.text);
+                append_message('Transcription', message.text);
                 if (recordButton) {
                     recordButton.disabled = false;
                     recordButton.textContent = 'Record Audio';
@@ -98,11 +107,11 @@ window.addEventListener('DOMContentLoaded', () => {
                     recordButton.disabled = false;
                     recordButton.textContent = 'Record Audio';
                 }
-                appendMessage('Error', message.error);
+                append_message('Error', message.error);
                 break;
 
             case 'voiceActivity':
-                updateVoiceActivity(message.isSpeaking);
+                update_voice_activity(message.isSpeaking);
                 break;
 
             case 'wsStatus':
@@ -110,7 +119,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case 'sendFailed':
-                appendMessage('You', message.text, true);
+                append_message('You', message.text, true);
                 break;
         }
     });
@@ -137,13 +146,21 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function updateVoiceActivity(isSpeaking) {
+function update_voice_activity(isSpeaking) {
     if (!speechIndicator) return;
     speechIndicator.className = `speech-indicator ${isSpeaking ? 'active' : ''}`;
 }
 
 function update_websocket_status(connected) {
     if (!wsStatusElement) return;
-    wsStatusElement.textContent = connected ? 'Connected' : 'Disconnected';
     wsStatusElement.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
+    wsStatusElement.title = connected ? 'Connected' : 'Disconnected';
+}
+
+function disable_retry_buttons() {
+    const retryButtons = document.querySelectorAll('.retry-button:not([disabled])');
+    retryButtons.forEach(button => {
+        button.disabled = true;
+        button.title = 'Retry no longer available';
+    });
 }
