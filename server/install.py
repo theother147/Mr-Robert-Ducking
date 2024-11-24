@@ -169,7 +169,54 @@ def install_ollama() -> bool:
         finally:
             if installer_path.exists():
                 installer_path.unlink()
+    elif sys.platform == "darwin":
+        try:
+            print("Installing Ollama for macOS...")
+            download_url = "https://ollama.com/download/Ollama-darwin.zip"
+            temp_dir = Path(os.getenv('TMPDIR', '/tmp'))
+            zip_path = temp_dir / "Ollama-darwin.zip"
+            
+            print("\nDownloading Ollama...")
+            print()  # Add newline before progress bar
+            
+            # Download with progress
+            if not download_with_progress(download_url, zip_path):
+                return False
                 
+            print("\nExtracting and installing Ollama.app...")
+            print()  # Add newline before progress bar
+            
+            with tqdm(total=1, desc="Installing") as pbar:
+                # Extract .app to Applications
+                subprocess.run(["unzip", "-q", str(zip_path), "-d", "/Applications"], check=True)
+                
+                # Set permissions
+                subprocess.run(["xattr", "-dr", "com.apple.quarantine", "/Applications/Ollama.app"], check=True)
+                
+                # Start Ollama
+                subprocess.run(["open", "/Applications/Ollama.app"], check=True)
+                pbar.update(1)
+                
+            print("\nWaiting for Ollama service to start...")
+            time.sleep(5)  # Give some time for service to initialize
+            
+            # Verify installation
+            is_installed, message = is_ollama_installed()
+            if is_installed:
+                print(f"\n✓ Ollama installed: {message}")
+                return True
+            else:
+                print("\nInstallation completed but service not responding")
+                print("Please try starting Ollama.app manually")
+                return False
+                
+        except Exception as e:
+            print(f"\nFailed to install Ollama: {e}")
+            return False
+        finally:
+            if zip_path.exists():
+                zip_path.unlink()
+                        
     elif sys.platform.startswith('linux'):
         try:
             print("Installing Ollama using official install script...")
