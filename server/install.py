@@ -5,12 +5,14 @@ import time
 from pathlib import Path
 from typing import Tuple
 
-def create_and_activate_venv():
+def create_and_activate_venv() -> str:
+    """Create virtual environment and return path to python executable"""
     import venv
     venv_path = Path(".venv")
     if not venv_path.exists():
         print("Creating virtual environment...")
         venv.create(venv_path, with_pip=True)
+    
     if sys.platform == "win32":
         python_executable = venv_path / "Scripts" / "python.exe"
     else:
@@ -123,7 +125,7 @@ def install_ollama() -> bool:
     
     if is_installed:
         print(f"✓ Ollama is already installed: {message}")
-        return True
+        return check_and_install_model()  # Continue with model installation
 
     print("Installing Ollama...")
 
@@ -150,7 +152,7 @@ def install_ollama() -> bool:
             
             if is_installed:
                 print(f"✓ Ollama installed: {message}")
-                return True
+                return check_and_install_model()  # Continue with model installation
             else:
                 print("Please restart your terminal to complete Ollama installation.")
                 return False
@@ -186,7 +188,7 @@ def install_ollama() -> bool:
             is_installed, message = is_ollama_installed()
             if is_installed:
                 print(f"\n✓ Ollama installed: {message}")
-                return True
+                return check_and_install_model()  # Continue with model installation
             else:
                 print("\nInstallation may have failed or PATH needs to be updated")
                 print("Please try starting a new terminal session")
@@ -199,7 +201,7 @@ def install_ollama() -> bool:
         print(f"Unsupported platform: {sys.platform}")
         return False
 
-def install_bootstrap_dependencies():
+def install_bootstrap_dependencies(python_executable: str) -> bool:
     """Install the minimal dependencies needed for the installer to run."""
     print("Installing essential dependencies...")
     
@@ -210,27 +212,73 @@ def install_bootstrap_dependencies():
 
     try:
         for module in bootstrap_modules:
-            try:
-                __import__(module)
-                continue
-            except ImportError:
-                print(f"Installing {module}...")
-                subprocess.check_call(
-                    [sys.executable, "-m", "pip", "install", module],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+            print(f"Installing {module}...")
+            subprocess.check_call(
+                [python_executable, "-m", "pip", "install", module],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
         return True
     except Exception as e:
         print(f"Failed to install essential dependencies: {e}")
         return False
 
+def check_and_install_model() -> bool:
+    """Check if codellama model is installed, download if not."""
+    try:
+        import ollama
+
+        print("\nChecking for required AI model...")
+        client = ollama.Client()
+        
+        try:
+            # Get list of installed models
+            models = client.list()
+            
+            # Extract model names from ListResponse
+            if hasattr(models, 'models'):
+                model_names = [model.model.split(':')[0] for model in models.models]
+            else:
+                print(f"Unexpected model list format: {type(models)}")
+                model_names = []
+            
+            # Check if model exists before showing download message
+            if 'codellama' in model_names:
+                print("✓ CodeLlama model already installed")
+                return True
+            
+            # Only show download messages if model needs to be installed    
+            print("\nDownloading CodeLlama model...")
+            print("This may take a while depending on your internet connection...")
+            print()  # Add newline before progress indicator
+            
+            from tqdm import tqdm
+            with tqdm(desc="Downloading model") as pbar:
+                client.pull('codellama')
+                pbar.update(1)
+            
+            print("\n✓ CodeLlama model installed successfully")
+            return True
+            
+        except AttributeError as ae:
+            print(f"\nError accessing model attributes: {ae}")
+            print("Response format:", models)
+            return False
+            
+    except Exception as e:
+        print(f"\nFailed to install CodeLlama model: {e}")
+        return False
+
 def main():
-    if not install_bootstrap_dependencies():
+    # First create venv and get its python executable
+    python_executable = create_and_activate_venv()
+    
+    # Install bootstrap dependencies into venv
+    if not install_bootstrap_dependencies(python_executable):
         print("Failed to install essential dependencies. Aborting.")
         return False
         
-    python_executable = create_and_activate_venv()
+    # Now install remaining requirements
     if not install_requirements(python_executable):
         sys.exit(1)
 
