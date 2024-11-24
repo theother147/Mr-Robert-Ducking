@@ -19,7 +19,7 @@ let recordingCommand;
 function activate(context) {
 	try {
 		// Connect to WebSocket server
-		connect_websocket();
+		// connect_websocket();
 
 		// Register the view provider
 		provider = new ViewProvider(context);
@@ -33,25 +33,24 @@ function activate(context) {
 				"rubberduck.startRecording",
 				async () => {
 					try {
-						const pythonPath = path.normalize("./python/.venv/bin/python");
+						const pythonExecutablePath = path.join(
+							__dirname,
+							"python",
+							".venv",
+							"bin",
+							"python"
+						);
 
-						// exec(pythonPath, (error, stdout, stderr) => {
-						// 	if (error) {
-						// 		console.error(`Error: ${error.message}`);
-						// 		return;
-						// 	}
-						// 	if (stderr) {
-						// 		console.error(`Stderr: ${stderr}`);
-						// 		return;
-						// 	}
-						// 	console.log(`Output: ${stdout}`);
-						// });
-
-						// const pythonProcess = spawn(pythonPath);
-						const scriptPath = path.normalize("./python/main.py");
-						const recordingProcess = spawn(pythonPath, [scriptPath]);
-
+						const scriptPath = path.join(
+							__dirname,
+							"python",
+							"main.py"
+						);
+						const recordingProcess = spawn(pythonExecutablePath, [scriptPath]);
+						console.log("Recording process started");
 						recordingProcess.stdout.on("data", (data) => {
+							vscode.window.showInformationMessage("yes");
+							console.log("PYTHON SENT:", data.toString());
 							try {
 								const messages = data.toString().trim().split("\n");
 								messages.forEach((msg) => {

@@ -1,3 +1,3 @@
-from whisper_live.server import TranscriptionServer
+from whisper_server import TranscriptionServer
 
 server = TranscriptionServer()
