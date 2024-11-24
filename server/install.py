@@ -82,6 +82,7 @@ def download_with_progress(url: str, output_path: Path) -> bool:
     try:
         # Import requests here after installation
         import requests
+        from tqdm import tqdm
         
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
