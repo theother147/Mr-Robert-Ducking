@@ -78,7 +78,11 @@ def install_requirements(python_executable):
         return False
 
 def download_with_progress(url: str, output_path: Path) -> bool:
+    """Download a file with progress indication."""
     try:
+        # Import requests here after installation
+        import requests
+        
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
         total_size = int(response.headers.get('content-length', 0))
@@ -169,6 +173,7 @@ def install_ollama() -> bool:
         finally:
             if installer_path.exists():
                 installer_path.unlink()
+                
     elif sys.platform == "darwin":
         try:
             print("Installing Ollama for macOS...")
