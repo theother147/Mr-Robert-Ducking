@@ -34,6 +34,12 @@ body {
     height: auto;
 }
 
+/* Update input styling */
+#message:disabled {
+    opacity: 0.6;
+    background: var(--vscode-input-background);
+    cursor: not-allowed;
+}
 
 /* Input */
 #inputContainer {
@@ -64,6 +70,13 @@ body {
 
 .actionButton:hover {
     background: var(--vscode-button-hoverBackground);
+}
+
+/* Update button styling */
+.actionButton:disabled {
+    opacity: 0.6;
+    background: var(--vscode-button-secondaryBackground) !important;
+    cursor: not-allowed;
 }
 
 /* Speech indicator */
@@ -125,4 +138,38 @@ body {
 .failed-message-text {
     color: var(--vscode-errorForeground);
     font-style: italic;
+}
+
+/* Attach button */
+.button-group {
+    display: flex;
+    gap: 4px;
+}
+
+#attachButton {
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Update attach button styling if needed */
+#attachButton:disabled {
+    opacity: 0.6;
+    background: var(--vscode-button-secondaryBackground) !important;
+    cursor: not-allowed;
+}
+
+/* Context indicator */
+.context-indicator {
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-editor-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    display: none;
+}
+
+.context-indicator.active {
+    display: block;
 }

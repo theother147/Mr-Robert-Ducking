@@ -13,9 +13,13 @@
         <div id="wsStatus" class="ws-status" title="Disconnected"></div>
     </div>
     <div id="chatHistory"></div>
+    <div id="contextIndicator" class="context-indicator"></div>
     <div id="inputContainer">
         <textarea id="message" placeholder="Type a message..."></textarea>
-        <button id="sendButton" class="actionButton">Send</button>
+        <div class="button-group">
+            <button id="attachButton" class="actionButton">Attach</button>
+            <button id="sendButton" class="actionButton">Send</button>
+        </div>
     </div>
     <script src="${scriptsUri}"></script>
 </body>

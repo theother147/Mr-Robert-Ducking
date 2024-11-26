@@ -30,10 +30,13 @@ class ViewProvider {
             message => {
                 switch (message.command) {
                     case 'sendMessage':
-                        vscode.commands.executeCommand('rubberduck.sendMessage', message.text);
+                        vscode.commands.executeCommand('rubberduck.sendMessage', message); // Pass full message object
                         break;
                     case 'startRecording':
                         vscode.commands.executeCommand('rubberduck.startRecording');
+                        break;
+                    case 'selectFile':
+                        vscode.commands.executeCommand('rubberduck.selectFile');
                         break;
                 }
             },
@@ -54,10 +57,14 @@ class ViewProvider {
         const scriptsUri = this._view.webview.asWebviewUri(vscode.Uri.file(
             path.join(this.context.extensionPath, 'modules', 'webview', 'scripts.js')
         ));
+        const attachIconUri = this._view.webview.asWebviewUri(vscode.Uri.file(
+            path.join(this.context.extensionPath, 'resources', 'attach.svg')
+        ));
 
         // Replace placeholders
         html = html.replace('${scriptsUri}', scriptsUri.toString());
         html = html.replace('${stylesUri}', stylesUri.toString());
+        html = html.replace('${attachIconUri}', attachIconUri.toString());
 
         return html;
     }

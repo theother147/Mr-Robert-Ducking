@@ -22,7 +22,7 @@
         {
           "id": "rubberduck",
           "title": "Rubber Duck AI Assistant",
-          "icon": "resources/rubberduck_icon.svg"
+          "icon": "resources/logo.svg"
         }
       ]
     },
@@ -38,11 +38,15 @@
     "commands": [
       {
         "command": "rubberduck.openWebview",
-        "title": "Open Rubber Duck Webview"
+        "title": "Open Webview"
       },
       {
         "command": "rubberduck.sendMessage",
-        "title": "Send message to WebSocket"
+        "title": "Send Message to WebSocket"
+      },
+      {
+        "command": "rubberduck.selectFile",
+        "title": "Select File for Attachment"
       },
       {
         "command": "rubberduck.startRecording",
