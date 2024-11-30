@@ -51,7 +51,7 @@ function activate(context) {
 		});
 
 		// Connect to WebSocket server
-		// connect_websocket();
+		connect_websocket();
 
 		// Register the view provider
 		provider = new ViewProvider(context);
