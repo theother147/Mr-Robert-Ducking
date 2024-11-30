@@ -12,12 +12,44 @@ const { spawn } = require("child_process");
 
 let provider;
 let recordingCommand;
+const pythonExecutablePath = path.join(
+	__dirname,
+	"python",
+	".venv",
+	"bin",
+	"python"
+);
+const scriptPath = path.join(__dirname, "python", "run_server.py");
+var transcriptionServerScript;
+
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
 	try {
+		// Start Whisper server
+
+		transcriptionServerScript = spawn(pythonExecutablePath, [
+			"-u",
+			scriptPath,
+			"--no_single_model",
+		]);
+
+		transcriptionServerScript.stdout.on("data", (data) => {
+			console.log("Python output:", data.toString());
+		});
+
+		// Add stderr handler
+		transcriptionServerScript.stderr.on("data", (data) => {
+			console.error("Python error:", data.toString());
+		});
+
+		// Add exit handler
+		transcriptionServerScript.on("close", (code) => {
+			console.log(`Python process exited with code ${code}`);
+		});
+
 		// Connect to WebSocket server
 		// connect_websocket();
 
@@ -38,38 +70,41 @@ function activate(context) {
 							"python",
 							".venv",
 							"bin",
-							"python3"
+							"python"
 						);
 
-						const scriptPath = path.join(
-							__dirname,
-							"python",
-							"main.py"
-						);
-						const recordingProcess = spawn(pythonExecutablePath, ["-u", scriptPath]);
+						const scriptPath = path.join(__dirname, "python", "transcribe_audio.py");
+
+						const recordingProcess = spawn(pythonExecutablePath, [
+							"-u",
+							scriptPath,
+						]);
+
+						if (!fs.existsSync(pythonExecutablePath)) {
+							console.error(
+								"Python executable not found at:",
+								pythonExecutablePath
+							);
+							return;
+						}
+
+						if (!fs.existsSync(scriptPath)) {
+							console.error("Python script not found at:", scriptPath);
+							return;
+						}
+
 						recordingProcess.stdout.on("data", (data) => {
-							vscode.window.showInformationMessage("success");
-							console.log("PYTHON SENT:", data.toString());
-							try {
-								const messages = data.toString().trim().split("\n");
-								messages.forEach((msg) => {
-									const parsed = JSON.parse(msg);
-									if (parsed.status === "recording") {
-										provider._view.webview.postMessage({
-											command: "voiceActivity",
-											isSpeaking: parsed.is_speech,
-										});
-									}
-								});
-							} catch (error) {
-								console.error("Error parsing recording output:", error);
-							}
+							console.log("Python output:", data.toString());
 						});
 
-						recordingProcess.on("error", (error) => {
-							vscode.window.showErrorMessage(
-								`Recording failed: ${error.message}`
-							);
+						// Add stderr handler
+						recordingProcess.stderr.on("data", (data) => {
+							console.error("Python error:", data.toString());
+						});
+
+						// Add exit handler
+						recordingProcess.on("close", (code) => {
+							console.log(`Python process exited with code ${code}`);
 						});
 					} catch (error) {
 						vscode.window.showErrorMessage(
@@ -94,6 +129,11 @@ function deactivate() {
 		recordingCommand = undefined;
 	}
 	close_websocket();
+	transcriptionServerScript.kill("SIGKILL");
+	// child.stdin.end();
+	// child.stdout.destroy();
+	// child.stderr.destroy();
+	// child.kill();
 }
 
 module.exports = {
