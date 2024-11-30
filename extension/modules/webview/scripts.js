@@ -8,12 +8,12 @@ window.addEventListener('DOMContentLoaded', () => {
     
     wsStatusElement = document.getElementById('wsStatus');
     
-    /* // Add speech indicator element
+    // Add speech indicator element
     speechIndicator = document.createElement('div');
     speechIndicator.id = 'speechIndicator';
     speechIndicator.className = 'speech-indicator';
     speechIndicator.textContent = '●';
-    document.getElementById('buttonContainer').appendChild(speechIndicator); */
+    document.getElementById('buttonContainer').appendChild(speechIndicator);
     
     // Send a message to the extension
     function send_message() {

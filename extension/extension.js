@@ -192,10 +192,6 @@ function activate(context) {
         });
         context.subscriptions.push(selectFileCommand);
 
-    } catch (error) {
-        console.error('Extension activation failed:', error);
-        vscode.window.showErrorMessage(`Extension activation failed: ${error.message}`);
-    }
 		// Only register command if not already registered
 		if (!recordingCommand) {
 			recordingCommand = vscode.commands.registerCommand(
