@@ -130,10 +130,6 @@ function deactivate() {
 	}
 	close_websocket();
 	transcriptionServerScript.kill("SIGKILL");
-	// child.stdin.end();
-	// child.stdout.destroy();
-	// child.stderr.destroy();
-	// child.kill();
 }
 
 module.exports = {
