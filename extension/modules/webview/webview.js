@@ -2,7 +2,6 @@
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
-const { receive_message_from_websocket } = require('../websocket');
 
 class ViewProvider {
     constructor(context) {
@@ -10,7 +9,7 @@ class ViewProvider {
         this._view = null;
     }
 
-    // Create the webview
+    // Create the webview view
     resolveWebviewView(webviewView) {
         this._view = webviewView;
 
@@ -23,30 +22,29 @@ class ViewProvider {
         };
 
         // Load webview HTML content
-        webviewView.webview.html = this._get_webview_content();
+        webviewView.webview.html = this.get_html_for_webview();
 
-        // Handle messages from webview
-        webviewView.webview.onDidReceiveMessage(
-            message => {
-                switch (message.command) {
-                    case 'sendMessage':
-                        vscode.commands.executeCommand('rubberduck.sendMessage', message); // Pass full message object
-                        break;
-                    case 'startRecording':
-                        vscode.commands.executeCommand('rubberduck.startRecording');
-                        break;
-                    case 'selectFile':
-                        vscode.commands.executeCommand('rubberduck.selectFile');
-                        break;
-                }
-            },
-            undefined,
-            this.context.subscriptions
+        // Handle messages from the webview
+        webviewView.webview.onDidReceiveMessage(message => {
+            switch (message.command) {
+                case 'sendMessage':
+                    vscode.commands.executeCommand('rubberduck.sendMessage', message);
+                    break;
+                case 'startRecording':
+                    vscode.commands.executeCommand('rubberduck.startRecording');
+                    break;
+                case 'selectFile':
+                    vscode.commands.executeCommand('rubberduck.selectFile');
+                    break;
+            }
+        },
+        undefined,
+        this.context.subscriptions
         );
     }
 
     // HTML content for the webview
-    _get_webview_content() {
+    get_html_for_webview() {
         const webviewPath = path.join(this.context.extensionPath, 'modules', 'webview', 'index.html');
         let html = fs.readFileSync(webviewPath, 'utf8');
 
