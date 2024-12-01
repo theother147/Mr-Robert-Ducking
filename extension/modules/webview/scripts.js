@@ -147,6 +147,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 const messageInput = document.getElementById('message');
                 messageInput.value = '';
                 break;
+            
+            case 'recording':
+                console.log('Received recording:', message.text);
+                append_message(message.sender, message.text);
+                break;
         }
     });
 

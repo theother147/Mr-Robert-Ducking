@@ -3,7 +3,7 @@ const path = require("path");
 const { spawn } = require("child_process");
 const fs = require("fs");
 
-const recording = async () => {
+const recording = (provider) => {
 	try {
 		const parentFolder = path.resolve(__dirname, "..", "..");
 		const pythonVirtualEnvironmentPath = path.join(
@@ -43,6 +43,13 @@ const recording = async () => {
 
 		recordingProcess.stdout.on("data", (data) => {
 			console.log("Python output:", data.toString());
+			if (provider && provider._view) {
+				provider._view.webview.postMessage({
+					command: "recording",
+					sender: "Rubber Duck",
+					text: data.toString(),
+				});
+		}
 		});
 
 		// Add stderr handler
@@ -54,6 +61,9 @@ const recording = async () => {
 		recordingProcess.on("close", (code) => {
 			console.log(`Python process exited with code ${code}`);
 		});
+
+
+		
 	} catch (error) {
 		vscode.window.showErrorMessage(`Recording failed: ${error.message}`);
 	}
