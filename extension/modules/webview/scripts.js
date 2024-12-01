@@ -118,6 +118,11 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'receiveMessage':
                 append_message(message.sender, message.text);
                 break;              
+            
+            case 'recording':
+                console.log('Received recording:', message.text);
+                append_message(message.sender, message.text);
+                break;
         }
     });
 

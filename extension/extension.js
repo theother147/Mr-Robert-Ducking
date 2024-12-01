@@ -79,7 +79,7 @@ function activate(context) {
 		// Register command to start recording
 		let recordingCommand = vscode.commands.registerCommand(
 			"rubberduck.startRecording",
-			recording
+			async(provider) => {recording(provider);}
 		);
 		context.subscriptions.push(recordingCommand);
 
