@@ -168,6 +168,6 @@ cython_debug/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 node_modules/
-extension/node_modules
+extension/node_modules/
 
 
