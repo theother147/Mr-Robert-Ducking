@@ -1,10 +1,11 @@
 const recording = require("./modules/commands/recordingCommand");
+const select_file = require("./modules/commands/selectFileCommand");
+const send_message_to_ws = require("./modules/commands/sendMessageCommand");
 const vscode = require("vscode");
 const { exec } = require("child_process");
 const {
 	connect_websocket,
 	close_websocket,
-	send_message_to_websocket,
 	set_provider,
 } = require("./modules/websocket");
 const { ViewProvider } = require("./modules/webview/webview");
@@ -71,34 +72,13 @@ function activate(context) {
 		// Register command to send messages to WebSocket server
 		let sendMessageCommand = vscode.commands.registerCommand(
 			"rubberduck.sendMessage",
-			(messageData) => {
-				try {
-					console.log(
-						"Extension received message:",
-						JSON.stringify(messageData, null, 2)
-					);
-					// Pass forceRetry flag if this is a retry attempt
-					const isRetry =
-						messageData.command === "sendMessage" && messageData.isRetry;
-					send_message_to_websocket(messageData, isRetry);
-				} catch (error) {
-					vscode.window.showErrorMessage(
-						`Failed to send message: ${error.message}`
-					);
-					if (provider && provider._view) {
-						provider._view.webview.postMessage({
-							command: "sendFailed",
-							text: messageData.text,
-							originalMessage: messageData,
-						});
-					}
-				}
+			(messageData, provider) => {
+				send_message_to_ws(messageData, provider);
 			}
 		);
 		context.subscriptions.push(sendMessageCommand);
 
-		// Only register command if not already registered
-
+		// Register command to start recording
 		let recordingCommand = vscode.commands.registerCommand(
 			"rubberduck.startRecording",
 			recording
@@ -109,153 +89,10 @@ function activate(context) {
 		let selectFileCommand = vscode.commands.registerCommand(
 			"rubberduck.selectFile",
 			async () => {
-				try {
-					if (!vscode.workspace.workspaceFolders) {
-						throw new Error("No workspace folder open");
-					}
-
-					// Get all files in workspace
-					const files = await vscode.workspace.findFiles(
-						"**/*",
-						"**/node_modules/**"
-					);
-					const fileItems = files.map((file) => ({
-						label: vscode.workspace.asRelativePath(file),
-						uri: file,
-						type: "file",
-					}));
-
-					// Add text selection option if there is selected text
-					const editor = vscode.window.activeTextEditor;
-					const selection = editor?.selection;
-					const selectedText = editor?.document.getText(selection);
-
-					let items = [
-						...(selectedText
-							? [
-									{
-										label: "Selected Text",
-										description:
-											selectedText.length > 50
-												? selectedText.substring(0, 50) + "..."
-												: selectedText,
-										type: "selection",
-										text: selectedText,
-									},
-							  ]
-							: []),
-						...fileItems,
-					];
-
-					// Show quick pick with both options
-					const selected = await vscode.window.showQuickPick(items, {
-						placeHolder: "Select content to attach",
-					});
-
-					if (selected) {
-						if (selected.type === "selection") {
-							// Handle text selection
-							if (provider && provider._view) {
-								provider._view.webview.postMessage({
-									command: "fileContent",
-									type: "selection",
-									content: selected.text, // text is available on selection items
-									label: "Text selection",
-								});
-							}
-						} else if (selected.type === "file") {
-							// Get current document if it matches the selected file
-							const activeDocuments = vscode.workspace.textDocuments;
-							const selectedDoc = activeDocuments.find(
-								(doc) => doc.uri.fsPath === selected.uri.fsPath
-							);
-
-							// Use current document content if available, otherwise read from disk
-							const text = selectedDoc
-								? selectedDoc.getText()
-								: new TextDecoder().decode(
-										await vscode.workspace.fs.readFile(selected.uri)
-								  );
-
-							if (provider && provider._view) {
-								provider._view.webview.postMessage({
-									command: "fileContent",
-									type: "file",
-									content: text,
-									label: `File: ${selected.label}`,
-								});
-							}
-						}
-					}
-				} catch (error) {
-					vscode.window.showErrorMessage(
-						`Failed to read content: ${error.message}`
-					);
-				}
+				select_file(provider);
 			}
 		);
 		context.subscriptions.push(selectFileCommand);
-
-		// Only register command if not already registered
-		if (!recordingCommand) {
-			recordingCommand = vscode.commands.registerCommand(
-				"rubberduck.startRecording",
-				async () => {
-					try {
-						const pythonExecutablePath = path.join(
-							__dirname,
-							"python",
-							".venv",
-							"Scripts",
-							"python"
-						);
-
-						const scriptPath = path.join(
-							__dirname,
-							"python",
-							"transcribe_audio.py"
-						);
-
-						const recordingProcess = spawn(pythonExecutablePath, [
-							"-u",
-							scriptPath,
-						]);
-
-						if (!fs.existsSync(pythonExecutablePath)) {
-							console.error(
-								"Python executable not found at:",
-								pythonExecutablePath
-							);
-							return;
-						}
-
-						if (!fs.existsSync(scriptPath)) {
-							console.error("Python script not found at:", scriptPath);
-							return;
-						}
-
-						recordingProcess.stdout.on("data", (data) => {
-							console.log("Python output:", data.toString());
-						});
-
-						// Add stderr handler
-						recordingProcess.stderr.on("data", (data) => {
-							console.error("Python error:", data.toString());
-						});
-
-						// Add exit handler
-						recordingProcess.on("close", (code) => {
-							console.log(`Python process exited with code ${code}`);
-						});
-					} catch (error) {
-						vscode.window.showErrorMessage(
-							`Recording failed: ${error.message}`
-						);
-					}
-				}
-			);
-			context.subscriptions.push(recordingCommand);
-		}
 	} catch (error) {
 		console.error("Extension activation failed:", error);
 		vscode.window.showErrorMessage(
@@ -265,10 +102,6 @@ function activate(context) {
 }
 
 function deactivate() {
-	if (recordingCommand) {
-		recordingCommand.dispose();
-		recordingCommand = undefined;
-	}
 	close_websocket();
 	transcriptionServerScript.kill("SIGKILL");
 }
