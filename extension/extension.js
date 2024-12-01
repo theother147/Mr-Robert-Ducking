@@ -1,4 +1,4 @@
-const  recording  = require("./modules/commands/recordingCommand");
+const recording = require("./modules/commands/recordingCommand");
 const vscode = require("vscode");
 const { exec } = require("child_process");
 const {
@@ -13,21 +13,22 @@ const path = require("path");
 const { spawn } = require("child_process");
 
 let provider;
-let recordingCommand;
-// const pythonExecutablePath = path.join(
-// 	__dirname,
-// 	"python",
-// 	".venv",
-// 	"Scripts",
-// 	"python.exe"
-// );
-const pythonExecutablePath = path.join(
-	__dirname,
-	"python",
-	".venv",
-	"bin",
-	"python"
-);
+const pythonVirtualEnvironmentPath = path.join(__dirname, "python", ".venv");
+let pythonExecutablePath;
+console.log("Platform:", process.platform);
+if (process.platform.includes("win32")) {
+	pythonExecutablePath = path.join(
+		pythonVirtualEnvironmentPath,
+		"Scripts",
+		"python.exe"
+	);
+} else {
+	pythonExecutablePath = path.join(
+		pythonVirtualEnvironmentPath,
+		"bin",
+		"python"
+	);
+}
 const scriptPath = path.join(__dirname, "python", "run_server.py");
 var transcriptionServerScript;
 
@@ -97,13 +98,12 @@ function activate(context) {
 		context.subscriptions.push(sendMessageCommand);
 
 		// Only register command if not already registered
-		if (!recordingCommand) {
-			recordingCommand = vscode.commands.registerCommand(
-				"rubberduck.startRecording",
-				recording
-			);
-			context.subscriptions.push(recordingCommand);
-		}
+
+		let recordingCommand = vscode.commands.registerCommand(
+			"rubberduck.startRecording",
+			recording
+		);
+		context.subscriptions.push(recordingCommand);
 
 		// Register command to select and read file
 		let selectFileCommand = vscode.commands.registerCommand(
