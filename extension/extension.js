@@ -17,8 +17,8 @@ const pythonExecutablePath = path.join(
 	__dirname,
 	"python",
 	".venv",
-	"bin",
-	"python"
+	"Scripts",
+	"python.exe"
 );
 const scriptPath = path.join(__dirname, "python", "run_server.py");
 var transcriptionServerScript;
@@ -80,43 +80,62 @@ function activate(context) {
         });
         context.subscriptions.push(sendMessageCommand);
 
-        // Register recording command (existing code)
-        if (!recordingCommand) {
-            recordingCommand = vscode.commands.registerCommand('rubberduck.startRecording', async () => {
-                try {
-                    const workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath;
-                    const venvPath = path.join(workspaceFolder, 'venv', 'bin', 'python');
-                    const pythonPath = fs.existsSync(venvPath) ? venvPath : (vscode.workspace.getConfiguration('python').get('pythonPath') || 'python');
-                    const scriptPath = path.join(context.extensionPath, 'python', 'main.py');
-                    const recordingProcess = spawn(pythonPath, [scriptPath]);
-                    
-                    recordingProcess.stdout.on('data', (data) => {
-                        try {
-                            const messages = data.toString().trim().split('\n');
-                            messages.forEach(msg => {
-                                const parsed = JSON.parse(msg);
-                                if (parsed.status === 'recording') {
-                                    provider._view.webview.postMessage({
-                                        command: 'voiceActivity',
-                                        isSpeaking: parsed.is_speech
-                                    });
-                                }
-                            });
-                        } catch (error) {
-                            console.error('Error parsing recording output:', error);
-                        }
-                    });
-                    
-                    recordingProcess.on('error', (error) => {
-                        vscode.window.showErrorMessage(`Recording failed: ${error.message}`);
-                    });
-                    
-                } catch (error) {
-                    vscode.window.showErrorMessage(`Recording failed: ${error.message}`);
-                }
-            });
-            context.subscriptions.push(recordingCommand);
-        }
+		// Only register command if not already registered
+		if (!recordingCommand) {
+			recordingCommand = vscode.commands.registerCommand(
+				"rubberduck.startRecording",
+				async () => {
+					try {
+						const pythonExecutablePath = path.join(
+							__dirname,
+							"python",
+							".venv",
+							"Scripts",
+							"python.exe"
+						);
+
+						const scriptPath = path.join(__dirname, "python", "transcribe_audio.py");
+
+						const recordingProcess = spawn(pythonExecutablePath, [
+							"-u",
+							scriptPath,
+						]);
+
+						if (!fs.existsSync(pythonExecutablePath)) {
+							console.error(
+								"Python executable not found at:",
+								pythonExecutablePath
+							);
+							return;
+						}
+
+						if (!fs.existsSync(scriptPath)) {
+							console.error("Python script not found at:", scriptPath);
+							return;
+						}
+
+						recordingProcess.stdout.on("data", (data) => {
+							console.log("Python output:", data.toString());
+						});
+
+						// Add stderr handler
+						recordingProcess.stderr.on("data", (data) => {
+							console.error("Python error:", data.toString());
+						});
+
+						// Add exit handler
+						recordingProcess.on("close", (code) => {
+							console.log(`Python process exited with code ${code}`);
+						});
+					} catch (error) {
+						vscode.window.showErrorMessage(
+							`Recording failed: ${error.message}`
+						);
+					}
+				}
+			);
+			context.subscriptions.push(recordingCommand);
+		}
 
         // Register command to select and read file
         let selectFileCommand = vscode.commands.registerCommand('rubberduck.selectFile', async () => {
@@ -202,7 +221,7 @@ function activate(context) {
 							__dirname,
 							"python",
 							".venv",
-							"bin",
+							"Scripts",
 							"python"
 						);
 
