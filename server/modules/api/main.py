@@ -36,7 +36,6 @@ class ServerConfig:
 @dataclass
 class Session:
     id: str
-    audio_data: List[bytes] = field(default_factory=list)
     messages: List[str] = field(default_factory=list)
 
 class WebSocketAPI:
@@ -96,15 +95,6 @@ class WebSocketAPI:
     def get_session(self, session_id: str) -> Optional[Session]:
         return self.sessions.get(session_id)
 
-    @controller.emits("audiofile_received")
-    def save_audio_data(self, session_id: str, audio_chunk: bytes) -> tuple[str, str, bytes]:
-        session = self.get_session(session_id)
-        if not session:
-            raise ValueError(f"Session {session_id} not found.")
-        session.audio_data.append(audio_chunk)
-        return (session_id, "audio", audio_chunk)
-        
-    @controller.emits("message_received")
     def save_message(self, session_id: str, message: str) -> tuple[str, str]:
         session = self.get_session(session_id)
         if not session:
@@ -120,29 +110,51 @@ class WebSocketAPI:
             raise ValueError(f"Session {session_id} not found.")
         
     async def process_message(self, websocket: websockets.WebSocketServerProtocol, session_id: str, data: dict) -> None:
-        """Process incoming websocket messages based on type"""
-        if "type" not in data:
-            await self.send_error(websocket, "Message type not specified", session_id)
-            return
-            
-        if data["type"] == "audio":
-            if "audio_chunk" not in data:
-                await self.send_error(websocket, "Audio chunk missing", session_id)
-                return
-            self.save_audio_data(session_id, data["audio_chunk"])
-            await self.send_acknowledgement(websocket, "Audio data received", session_id)
-            
-        elif data["type"] == "text":
+        """Process incoming websocket messages"""
+        try:
             if "message" not in data:
-                await self.send_error(websocket, "Text message missing", session_id)
+                await self.send_error(websocket, "Message is required", session_id)
                 return
-            self.save_message(session_id, data["message"])
-            await self.send_acknowledgement(websocket, "Text message received", session_id)
+                
+            # Format the prompt with any provided files
+            prompt = data["message"]
             
-        else:
-            await self.send_error(websocket, f"Unknown message type: {data['type']}", session_id)
+            if "files" in data and isinstance(data["files"], list):
+                prompt += "\n\nHere are the relevant files:\n\n"
+                for file in data["files"]:
+                    # Detect language from filename extension
+                    ext = file["filename"].split(".")[-1] if "." in file["filename"] else ""
+                    language = {
+                        "py": "python",
+                        "js": "javascript",
+                        "ts": "typescript",
+                        "java": "java",
+                        "cpp": "cpp",
+                        "c": "c",
+                    }.get(ext, "")
+                    
+                    prompt += f"File: {file['filename']}\n"
+                    prompt += f"```{language}\n"
+                    prompt += f"{file['content']}\n"
+                    prompt += "```\n\n"
             
-    async def websocket_handler(self, websocket: websockets.WebSocketServerProtocol, path: str) -> None:
+            # Save the formatted prompt
+            self.save_message(session_id, prompt)
+            
+            # TODO: Send to Ollama (for now just echo back)
+            response = {
+                "message": "I understand your explanation. Let's analyze this together.",
+                "session_id": session_id
+            }
+            
+            await websocket.send(json.dumps(response))
+            
+        except Exception as e:
+            logger.error(f"Error processing message: {str(e)}")
+            await self.send_error(websocket, "Internal server error", session_id)
+            
+    async def websocket_handler(self, websocket: websockets.WebSocketServerProtocol, path: str = '/') -> None:
+        """Handle incoming WebSocket connections"""
         session_id = self.create_session()
         logger.info(f"New WebSocket connection established - Session ID: {session_id}")
         
@@ -161,12 +173,13 @@ class WebSocketAPI:
 
                     try:
                         data = json.loads(message)
+                        logger.debug(f"Received message: {data}")
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON format - Session {session_id}: {str(e)}")
                         await self.send_error(websocket, "Invalid message format", session_id)
                         continue
 
-                    # Process message based on type
+                    # Process message
                     await self.process_message(websocket, session_id, data)
 
                 except asyncio.TimeoutError:
@@ -184,28 +197,25 @@ class WebSocketAPI:
             self.close_session(session_id)
             logger.info(f"Session closed: {session_id}")
 
-    async def send_response(
-        self, 
-        websocket: websockets.WebSocketServerProtocol,
-        message: str,
-        session_id: str,
-        type: MessageType
-    ) -> None:
-        """Generic method for sending websocket responses"""
-        response: WebSocketResponse = {
-            "type": type.value,
+    async def send_error(self, websocket: websockets.WebSocketServerProtocol, message: str, session_id: str) -> None:
+        """Send error message to client"""
+        response = {
+            "type": "error",
             "message": message,
             "session_id": session_id
         }
-        log_level = logger.error if type == MessageType.ERROR else logger.info
-        log_level(f"Sending {type.value} response: {response}")
+        logger.error(f"Sending error response: {response}")
         await websocket.send(json.dumps(response))
 
-    async def send_error(self, *args, **kwargs) -> None:
-        await self.send_response(*args, type=MessageType.ERROR, **kwargs)
-
-    async def send_acknowledgement(self, *args, **kwargs) -> None:
-        await self.send_response(*args, type=MessageType.ACK, **kwargs)
+    async def send_acknowledgement(self, websocket: websockets.WebSocketServerProtocol, message: str, session_id: str) -> None:
+        """Send acknowledgement message to client"""
+        response = {
+            "type": "ack",
+            "message": message,
+            "session_id": session_id
+        }
+        logger.info(f"Sending acknowledgement: {response}")
+        await websocket.send(json.dumps(response))
 
     @asynccontextmanager
     async def server_context(self) -> AsyncGenerator[websockets.WebSocketServer, None]:
