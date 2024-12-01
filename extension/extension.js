@@ -3,16 +3,13 @@ const select_file = require("./modules/commands/selectFileCommand");
 const send_message_to_ws = require("./modules/commands/sendMessageCommand");
 const vscode = require("vscode");
 const { exec } = require("child_process");
-const {
-	connect_websocket,
-	close_websocket,
-	set_provider,
-} = require("./modules/websocket");
-const { ViewProvider } = require("./modules/webview/webview");
+const { WebSocketManager } = require('./modules/websocket');
+const { ViewProvider } = require('./modules/webview/webview');
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 
+let wsManager;
 let provider;
 const pythonVirtualEnvironmentPath = path.join(__dirname, "python", ".venv");
 let pythonExecutablePath;
@@ -60,9 +57,10 @@ function activate(context) {
 			console.log(`Python process exited with code ${code}`);
 		});
 
-		provider = new ViewProvider(context); // Initialize webview provider
-		set_provider(provider); // Share provider with WebSocket module
-		connect_websocket(); // Connect to WebSocket server
+        wsManager = new WebSocketManager(); // Initialize WebSocket manager
+        provider = new ViewProvider(context); // Initialize webview provider
+        wsManager.set_provider(provider); // Share provider with WebSocket module
+        wsManager.connect(); // Connect to WebSocket server
 
 		// Register the webview provider to create UI
 		context.subscriptions.push(
@@ -73,7 +71,7 @@ function activate(context) {
 		let sendMessageCommand = vscode.commands.registerCommand(
 			"rubberduck.sendMessage",
 			(messageData, provider) => {
-				send_message_to_ws(messageData, provider);
+				send_message_to_ws(messageData, wsManager, provider);
 			}
 		);
 		context.subscriptions.push(sendMessageCommand);
@@ -102,7 +100,7 @@ function activate(context) {
 }
 
 function deactivate() {
-	close_websocket();
+	wsManager.close_connection();
 	transcriptionServerScript.kill("SIGKILL");
 }
 

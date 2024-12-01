@@ -1,6 +1,8 @@
-let speechIndicator;
 let wsStatusElement;
 let storedContext = null;
+let isRecording = false;
+const userName = 'You';
+const aiName = 'Rubber Duck';
 
 // Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
@@ -8,21 +10,14 @@ window.addEventListener('DOMContentLoaded', () => {
     
     wsStatusElement = document.getElementById('wsStatus');
     
-    // Add speech indicator element
-    speechIndicator = document.createElement('div');
-    speechIndicator.id = 'speechIndicator';
-    speechIndicator.className = 'speech-indicator';
-    speechIndicator.textContent = '●';
-    document.getElementById('buttonContainer').appendChild(speechIndicator);
-    
     // Send a message to the extension
     function send_message() {
         const messageInput = document.getElementById('message');
         const message = messageInput.value.trim();
         if (message) {
-            disable_controls(); // Disable controls immediately when sending
-            disable_retry_buttons();
-            append_message('You', message);
+            disable_controls();
+            disable_retry();
+            append_message(userName, message);
             
             const payload = {
                 command: 'sendMessage',
@@ -78,58 +73,25 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Clear the chat history
+    // Clear chat history
     document.getElementById('clearButton').addEventListener('click', () => {
         document.getElementById('chatHistory').innerHTML = '';
+    });
+
+    // Attach a file to the chat
+    document.getElementById('attachButton').addEventListener('click', () => {
+        vscode.postMessage({ 
+            command: 'selectFile'
+        });
     });
 
     // Handle messages from the extension
     window.addEventListener('message', event => {
         const message = event.data;
-        const recordButton = document.getElementById('recordButton');
         
-        switch(message.command) {
-            case 'receiveMessage':
-                append_message(message.sender, message.text);
-                break;
-                
-            case 'updateStatus':
-                if (recordButton) {
-                    recordButton.textContent = message.status;
-                }
-                break;
-                
-            case 'receiveTranscription':
-                append_message('Transcription', message.text);
-                if (recordButton) {
-                    recordButton.disabled = false;
-                    recordButton.textContent = 'Record Audio';
-                }
-                break;
-                
-            case 'recordingError':
-                if (recordButton) {
-                    recordButton.disabled = false;
-                    recordButton.textContent = 'Record Audio';
-                }
-                append_message('Error', message.error);
-                break;
-
-            case 'voiceActivity':
-                update_voice_activity(message.isSpeaking);
-                break;
-
+        switch(message.type) {
             case 'wsStatus':
-                update_websocket_status(message.connected);
-                break;
-
-            case 'sendFailed':
-                if (message.isLastRetry) {
-                    enable_controls(message.text); // Re-enable with original text after last retry
-                } else {
-                    disable_controls(); // Keep disabled during retries
-                }
-                append_message('You', message.text, true, message.originalMessage);
+                update_websocket_status(message.status);
                 break;
 
             case 'fileContent':
@@ -143,10 +105,19 @@ window.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case 'sendSuccess':
-                enable_controls(); // Clear and re-enable on success
+                enable_controls();
                 const messageInput = document.getElementById('message');
                 messageInput.value = '';
                 break;
+
+            case 'sendFailed':
+                enable_controls(message.text);
+                append_message(userName, message.text, true, message.originalMessage);
+                break;
+
+            case 'receiveMessage':
+                append_message(message.sender, message.text);
+                break;              
         }
     });
 
@@ -154,46 +125,29 @@ window.addEventListener('DOMContentLoaded', () => {
     const recordButton = document.getElementById('recordButton');
     if (recordButton) {
         recordButton.addEventListener('click', async () => {
-            // Disable button and show recording state
-            recordButton.disabled = true;
-            recordButton.textContent = 'Recording...';
-            
-            try {
-                // Send command to extension to start recording
+            if (isRecording) {
+                recordButton.textContent = 'Start recording';
+                isRecording = false;
+                vscode.postMessage({ command: 'stopRecording' });
+            } else {  
+                recordButton.textContent = 'Stop recording';
+                isRecording = true;
                 vscode.postMessage({ command: 'startRecording' });
-                
-            } catch (error) {
-                // Reset button on error
-                recordButton.disabled = false;
-                recordButton.textContent = 'Record Audio';
-                console.error('Recording failed:', error);
             }
         });
     }
-
-    document.getElementById('attachButton').addEventListener('click', () => {
-        vscode.postMessage({ 
-            command: 'selectFile'
-        });
-    });
 });
 
-function update_voice_activity(isSpeaking) {
-    if (!speechIndicator) return;
-    speechIndicator.className = `speech-indicator ${isSpeaking ? 'active' : ''}`;
-}
 
 function update_websocket_status(connected) {
-    if (!wsStatusElement) return;
     wsStatusElement.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
     wsStatusElement.title = connected ? 'Connected' : 'Disconnected';
 }
 
-function disable_retry_buttons() {
+function disable_retry() {
     const retryButtons = document.querySelectorAll('.retry-button:not([disabled])');
     retryButtons.forEach(button => {
         button.disabled = true;
-        button.title = 'Retry no longer available';
     });
 }
 
