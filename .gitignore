@@ -165,3 +165,8 @@ cython_debug/
 # VS Code
 .vscode/
 .vscode/launch.json
+# Node.js Tools for Visual Studio
+.ntvs_analysis.dat
+node_modules/
+
+

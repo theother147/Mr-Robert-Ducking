@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubber Duck AI Assistant</title>
+    <link rel="stylesheet" href="${stylesUri}">
+</head>
+<body>
+    <div id="buttonContainer">
+        <button id="clearButton" class="actionButton">Clear Chat</button>
+        <button id="recordButton" class="actionButton">Record Audio</button>
+        <div id="wsStatus" class="ws-status" title="Disconnected"></div>
+    </div>
+    <div id="chatHistory"></div>
+    <div id="contextIndicator" class="context-indicator"></div>
+    <div id="inputContainer">
+        <textarea id="message" placeholder="Type a message..."></textarea>
+        <div class="button-group">
+            <button id="attachButton" class="actionButton">Attach</button>
+            <button id="sendButton" class="actionButton">Send</button>
+        </div>
+    </div>
+    <script src="${scriptsUri}"></script>
+</body>
+</html>
