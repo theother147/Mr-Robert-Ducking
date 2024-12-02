@@ -19,6 +19,7 @@ async def handle_message(event_data):
     await controller.trigger("generate_response", {
         'data': {
             'session_id': session_id,
-            'message': f"Test response to: {prompt}"
+            'message': prompt,
+            'files': files
         }
     })
