@@ -6,24 +6,28 @@ class LLM:
     """
     Wrapper class for the Ollama API
     """
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
     def __init__(self):
         """
         Initialize the LLM object
         """
-        self.ollama = ollama
-        self.context = None
-        self.messages = []
+        if not self._initialized:
+            self.ollama = ollama
+            self.context = None
+            self.messages = []
+            self._initialized = True
 
     @controller.on("generate_response")
     def chat(self, data: dict):
         """
         Chat with the model
         """
-        # Add the files and the content to the input
-        """if data["files"] is not None:
-            for file in data["files"]:
-                input += " Datei: " + file["filename"] + ", Code: " + file["content"]
-"""
         # Append the user message to the messages list
         self.messages.append({"role": "user", "content": data["message"]})
         # Create a chat response
@@ -38,18 +42,7 @@ class LLM:
             "session_id": data["session_id"],
             "response": response["message"]["content"]
         }
-        return self.send_response(data)
-
-    @controller.emits("response_generated")
-    def send_response(self, data):
-        """
-        Send the response to the Controller
-        """
-        return data
-
-
-
-
+        return controller.trigger("response_generated", data)
 
 llm = LLM()
 while True:

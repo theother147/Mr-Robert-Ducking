@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import importlib.util
 
+
 # Add server directory to Python path
 server_dir = Path(__file__).parent
 sys.path.insert(0, str(server_dir))
@@ -80,8 +81,11 @@ async def cleanup(api=None):
     logger.info("Server stopped by user.")
 
 async def main():
+    from server.modules.llm.llm import LLM
     api = None
     try:
+        llm = LLM()
+
         # Discover all event handlers
         discover_handlers()
         logger.debug("Event handlers discovery completed")
