@@ -45,7 +45,7 @@ window.addEventListener('DOMContentLoaded', () => {
             };
             if (attachedContext) {
                 payload.context = {
-                    file: attachedContext.file,
+                    filename: attachedContext.file,
                     content: attachedContext.content
                 };
                 attachedContext = null;

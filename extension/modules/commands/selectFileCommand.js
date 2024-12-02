@@ -8,13 +8,15 @@ const select_file = async (provider) => {
 
         // Get all files in workspace
         const files = await vscode.workspace.findFiles(
-            "**/*",
+            "**/*", // Globally search for all files
             "**/node_modules/**" // Exclude node_modules
         );
+
+        // Map files to quick pick items
         const fileItems = files.map((file) => ({
+            type: "file",
             label: vscode.workspace.asRelativePath(file),
             uri: file,
-            type: "file",
         }));
 
         // Add text selection option if there is selected text
@@ -22,16 +24,13 @@ const select_file = async (provider) => {
         const selection = editor?.selection;
         const selectedText = editor?.document.getText(selection);
 
+        // Combine selected text and files into one array
         let items = [
             ...(selectedText
                 ? [
                         {
-                            label: "Selected Text",
-                            description:
-                                selectedText.length > 50
-                                    ? selectedText.substring(0, 50) + "..."
-                                    : selectedText,
                             type: "selection",
+                            label: "Selected Text",
                             text: selectedText,
                         },
                 ]
@@ -44,14 +43,15 @@ const select_file = async (provider) => {
             placeHolder: "Select content to attach",
         });
 
+        // Attach selected content to chat
         if (selected) {
             if (selected.type === "selection") {
-                // Handle text selection
+                // Send selected text to webview
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: "addContext",
                         file: "Text selection",
-                        content: selected.text, // text is available on selection items
+                        content: selected.text,
                     });
                 }
             } else if (selected.type === "file") {
@@ -61,13 +61,14 @@ const select_file = async (provider) => {
                     (doc) => doc.uri.fsPath === selected.uri.fsPath
                 );
 
-                // Use current document content if available, otherwise read from disk
+                // Get text content of selected file
                 const text = selectedDoc
                     ? selectedDoc.getText()
                     : new TextDecoder().decode(
                             await vscode.workspace.fs.readFile(selected.uri)
                     );
 
+                // Send file content to webview
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: "addContext",
