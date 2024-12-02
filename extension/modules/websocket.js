@@ -127,9 +127,8 @@ class WebSocketManager {
         // Send to webview
         if (this._provider && this._provider._view) {
             console.log('WebSocket: Sending message to webview:', message.message);
-            this._provider.postMessage({
+            this._provider._view.webview.postMessage({
                 command: 'receiveMessage',
-                sender: 'WebSocket',
                 text: message.message
             });
         }
