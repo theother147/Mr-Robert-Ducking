@@ -50,9 +50,8 @@ const select_file = async (provider) => {
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: "fileContent",
-                        type: "selection",
+                        file: "Text selection",
                         content: selected.text, // text is available on selection items
-                        label: "Text selection",
                     });
                 }
             } else if (selected.type === "file") {
@@ -72,9 +71,8 @@ const select_file = async (provider) => {
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: "fileContent",
-                        type: "file",
+                        file: `File: ${selected.label}`,
                         content: text,
-                        label: `File: ${selected.label}`,
                     });
                 }
             }

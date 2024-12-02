@@ -5,6 +5,9 @@ let chatHistory;
 let messageInput;
 let recordButton;
 let attachButton;
+let contextElement;
+let contextText;
+let deleteContextButton;
 let sendButton;
 let newChatButton;
 let isRecording = false;
@@ -20,6 +23,9 @@ window.addEventListener('DOMContentLoaded', () => {
     messageInput = document.getElementById('messageInput');
     recordButton = document.getElementById('recordButton');
     attachButton = document.getElementById('attachButton');
+    contextElement = document.getElementById('contextIndicator');
+    contextText = document.getElementById('contextText');
+    deleteContextButton = document.getElementById('deleteContextButton');
     sendButton = document.getElementById('sendButton');
     newChatButton = document.getElementById('newChatButton');
       
@@ -41,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     content: attachedContext.content
                 };
                 attachedContext = null;
-                update_context_indicator();
+                update_context();
             }
             vscode.postMessage(payload);
         }
@@ -97,7 +103,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     file: message.file,
                     content: message.content,
                 };
-                update_context_indicator();
+                update_context();
                 break;
 
             case 'sendSuccess':
@@ -153,6 +159,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Delete context button functionality
+    document.getElementById('deleteContextButton').addEventListener('click', delete_context);
+
     // New chat button functionality
     newChatButton.addEventListener('click', () => {
         document.getElementById('chatHistory').innerHTML = '';
@@ -174,15 +183,22 @@ function disable_retry() {
     });
 }
 
-function update_context_indicator() {
-    const indicator = document.getElementById('contextIndicator');
+function update_context() {
     if (attachedContext) {
-        indicator.textContent = `Context: ${attachedContext.file}`;
-        indicator.className = 'context-indicator active';
+        contextText.textContent = `Context: ${attachedContext.file}`;
+        contextElement.className = 'context-indicator active';
+        deleteContextButton.style.display = 'inline';
     } else {
-        indicator.className = 'context-indicator';
+        contextText.textContent = '';
+        contextElement.className = 'context-indicator';
+        deleteContextButton.style.display = 'none';
     }
 }
+
+function delete_context() {
+    attachedContext = null;
+    update_context();
+} 
 
 // Add control management functions
 function allow_input(allowed) {

@@ -13,7 +13,10 @@
         <div id="wsStatusIndicator" class="ws-status" title="Disconnected"></div>
     </div>
     <div id="chatHistory"></div>
-    <div id="contextIndicator" class="context-indicator"></div>
+    <div id="contextIndicator" class="context-indicator">
+        <span id="contextText"></span>
+        <button id="deleteContextButton" class="delete-button" style="display: none;">&times;</button>
+    </div>
     <div id="inputContainer">
         <textarea id="messageInput" placeholder="Hey Rubber Duck!"></textarea>
         <div class="button-group">
