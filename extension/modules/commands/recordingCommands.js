@@ -4,12 +4,24 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const { getPythonExecutablePath } = require("../utils");
 
-const recording = async (provider) => {
-	try{
-		const scriptPath = path.join(path.resolve(__dirname, "..", ".."), "python", "transcribe_audio.py");
-		const pythonExecutablePath = getPythonExecutablePath();
-		const recordingProcess = spawn(pythonExecutablePath, ["-u", scriptPath]);
+let recordingProcess;
+const startRecording= async (provider) => {
+		try {
+			const scriptPath = path.join(
+				path.resolve(__dirname, "..", ".."),
+				"python",
+				"transcribe_audio.py"
+			);
+			const pythonExecutablePath = getPythonExecutablePath();
+			recordingProcess = spawn(pythonExecutablePath, ["-u", scriptPath]);
+		} catch (error) {
+			console.error("Failed to start recording:", error);
+		}
 
+		if (recordingProcess === undefined) {
+			console.error("Recording process not started");
+			return;
+		}
 		recordingProcess.stdout.on("data", (data) => {
 			console.log("Python output:", data.toString());
 			if (!data.toString().includes("[INFO]")) {
@@ -31,12 +43,13 @@ const recording = async (provider) => {
 		recordingProcess.on("close", (code) => {
 			console.log(`Python process exited with code ${code}`);
 		});
-
-
-		
-	} catch (error) {
-		vscode.window.showErrorMessage(`Recording failed: ${error.message}`);
-	}
 };
 
-module.exports = recording;
+const stopRecording = async () => {
+	if (recordingProcess) {
+		console.log("Stopping recording process");
+		recordingProcess.kill();
+	}
+}
+
+module.exports = { startRecording, stopRecording };
