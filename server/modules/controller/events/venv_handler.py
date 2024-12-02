@@ -2,7 +2,7 @@ import sys
 import subprocess
 from modules.controller.main import controller
 from modules.utils.logger import logger
-from modules.controller.triggers.venv_trigger import (
+from modules.utils.venv import (
     check_venv,
     create_venv,
     restart_in_venv,
@@ -10,25 +10,28 @@ from modules.controller.triggers.venv_trigger import (
 )
 
 @controller.on("venv_status")
-def handle_venv_status(data):
+def handle_venv_status(event_data):
     """Handle venv status check"""
-    status = data.get('data', 'unknown')
+    data = event_data.get('data', {})
+    status = data.get('status', 'unknown')
     logger.info(f"Virtual environment status: {status}")
 
 @controller.on("venv_create")
-def handle_venv_create(data):
+def handle_venv_create(event_data):
     """Handle venv creation"""
-    path = data.get('data', 'unknown')
+    data = event_data.get('data', {})
+    path = data.get('path', 'unknown')
     logger.info(f"Virtual environment created at: {path}")
 
 @controller.on("venv_restart")
-def handle_venv_restart(data):
+def handle_venv_restart(event_data):
     """Handle venv restart"""
-    python_path = data.get('data', 'unknown')
+    data = event_data.get('data', {})
+    python_path = data.get('python_path', 'unknown')
     logger.info(f"Restarting with Python: {python_path}")
 
 @controller.on("check_environment")
-def handle_venv_check(data):
+def handle_venv_check(event_data):
     """Handler for checking and ensuring virtual environment"""
     try:
         # Check current status
@@ -40,7 +43,8 @@ def handle_venv_check(data):
             create_venv()
             
             # Get restart info
-            _, python_path = restart_in_venv()
+            restart_data = restart_in_venv()
+            python_path = restart_data.get('python_path')
             
             logger.info("Restarting in virtual environment...")
             try:

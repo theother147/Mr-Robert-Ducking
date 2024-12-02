@@ -1,11 +1,12 @@
 from modules.controller.main import controller
 from modules.utils.logger import logger
-from modules.controller.triggers.install_trigger import start_installation
+from modules.install.triggers import start_installation
 
 @controller.on("install_check")
-async def handle_install_check(data):
+async def handle_install_check(event_data):
     """Handle installation verification"""
-    status = data.get('data', {}).get('status')
+    data = event_data.get('data', {})
+    status = data.get('status')
     if status == "missing":
         logger.info("Dependencies not fully installed. Starting installation...")
         await start_installation()
@@ -13,12 +14,13 @@ async def handle_install_check(data):
         logger.info("Installation verified.")
 
 @controller.on("install_start")
-async def handle_installation(data):
+async def handle_installation(event_data):
     """Handle installation process"""
-    status = data.get('data', {}).get('status')
+    data = event_data.get('data', {})
+    status = data.get('status')
     if status == "completed":
         logger.info("Installation completed successfully.")
     else:
-        error = data.get('data', {}).get('error', 'Unknown error')
+        error = data.get('error', 'Unknown error')
         logger.error(f"Installation failed: {error}")
         raise RuntimeError(f"Installation failed: {error}") 

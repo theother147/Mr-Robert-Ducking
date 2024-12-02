@@ -3,7 +3,6 @@ from modules.utils.logger import logger
 import functools
 import asyncio
 from datetime import datetime
-from .events import discover_handlers
 
 class Controller:
     _instance = None
@@ -31,50 +30,32 @@ class Controller:
                     logger.error(f"Error in event handler for {event}: {e}")
         else:
             logger.debug(f"No handlers registered for event: {event}")
-            
+
     def emits(self, event: str):
         """Decorator that marks a method as an event emitter"""
         def decorator(func):
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
                 result = await func(*args, **kwargs)
-                if isinstance(result, tuple):
-                    session_id = result[0]
-                    data = result[1]
-                else:
-                    session_id = None
-                    data = result
-                
                 await self.trigger(event, {
-                    'session_id': session_id,
-                    'data': data,
+                    'data': result,
                     'timestamp': datetime.now().isoformat()
                 })
-                
                 return result
                 
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs):
                 result = func(*args, **kwargs)
-                if isinstance(result, tuple):
-                    session_id = result[0]
-                    data = result[1]
-                else:
-                    session_id = None
-                    data = result
-                
                 asyncio.create_task(self.trigger(event, {
-                    'session_id': session_id,
-                    'data': data,
+                    'data': result,
                     'timestamp': datetime.now().isoformat()
                 }))
-                
                 return result
                 
             if asyncio.iscoroutinefunction(func):
                 return async_wrapper
             return sync_wrapper
-            
+
         return decorator
 
     def on(self, event: str):
@@ -88,7 +69,4 @@ class Controller:
 
 # Create singleton instance
 controller = Controller()
-
-# Auto-discover event handlers
-discover_handlers()
-logger.debug("Event handlers discovery completed")
+logger.debug("Controller initialized")
