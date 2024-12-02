@@ -92,7 +92,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('message', event => {
         const message = event.data;
         
-        switch(message.type) {
+        switch(message.command) {
             case 'wsStatus':
                 update_websocket_status(message.status);
                 break;

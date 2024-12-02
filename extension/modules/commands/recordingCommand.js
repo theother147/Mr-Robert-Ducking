@@ -15,7 +15,7 @@ const recording = async (provider) => {
 			if (provider && provider._view) {
 				provider._view.webview.postMessage({
 					command: "recording",
-					sender: "Rubber Duck",
+					sender: "Transcription",
 					text: data.toString(),
 				});
 		}
