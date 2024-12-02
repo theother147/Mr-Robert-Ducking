@@ -38,7 +38,7 @@ function activate(context) {
 		let sendMessageCommand = vscode.commands.registerCommand(
 			"rubberduck.sendMessage",
 			(messageData) => {
-				send_message_to_ws(messageData, provider, wsManager);
+				send_message_to_ws(messageData, wsManager, provider);
 			}
 		);
 		context.subscriptions.push(sendMessageCommand);
@@ -51,6 +51,9 @@ function activate(context) {
 			}
 		);
 		context.subscriptions.push(recordingCommand);
+
+		// Register command to stop recording
+		
 
 		// Register command to select and read file
 		let selectFileCommand = vscode.commands.registerCommand(

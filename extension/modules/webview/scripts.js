@@ -1,92 +1,88 @@
-let wsStatusElement;
-let storedContext = null;
-let isRecording = false;
 const userName = 'You';
 // @ts-ignore
 const aiName = 'Rubber Duck';
+let wsStatusIndicator;
+let chatHistory;
+let messageInput;
+let recordButton;
+let attachButton;
+let sendButton;
+let newChatButton;
+let isRecording = false;
+let attachedContext;
 
 // Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
     // @ts-ignore
     const vscode = acquireVsCodeApi();
     
-    wsStatusElement = document.getElementById('wsStatus');
-    
+    wsStatusIndicator = document.getElementById('wsStatusIndicator');
+    chatHistory = document.getElementById('chatHistory');
+    messageInput = document.getElementById('messageInput');
+    recordButton = document.getElementById('recordButton');
+    attachButton = document.getElementById('attachButton');
+    sendButton = document.getElementById('sendButton');
+    newChatButton = document.getElementById('newChatButton');
+      
     // Send a message to the extension
     function send_message() {
-        const messageInput = document.getElementById('message');
-        // @ts-ignore
         const message = messageInput.value.trim();
         if (message) {
-            disable_controls();
-            disable_retry();
-            append_message(userName, message);
+            allow_input(false); // Disable input while sending message
+            disable_retry(); // Disable retry buttons
+            update_chat(userName, message); // Update chat history with the message
             
             const payload = {
                 command: 'sendMessage',
                 text: message
             };
-            if (storedContext) {
-                payload.context = storedContext.content;
-                clear_stored_context();
+            if (attachedContext) {
+                payload.context = {
+                    file: attachedContext.file,
+                    content: attachedContext.content
+                };
+                attachedContext = null;
+                update_context_indicator();
             }
             vscode.postMessage(payload);
         }
     }
 
     // Append a message to the chat history
-    function append_message(sender, text, failed = false, originalMessage = null) {
-        const chatHistory = document.getElementById('chatHistory');
-        const messageElement = document.createElement('div');
-        messageElement.className = failed ? 'message-failed' : '';
-
-        const messageContent = document.createElement('span');
-        messageContent.textContent = failed ? 'Failed to send message' : `${sender}: ${text}`;
-        messageContent.className = failed ? 'failed-message-text' : '';
-        messageElement.appendChild(messageContent);
-
+    function update_chat(sender = null, text = null, failed = false) {
         if (failed) {
+            // Create retry button if message failed to send
             const retryButton = document.createElement('button');
             retryButton.className = 'retry-button';
             retryButton.textContent = 'Retry';
             retryButton.onclick = () => {
                 retryButton.disabled = true;
-                disable_controls(); // Disable controls during retry
-                const messageToRetry = {
+                allow_input(false); // Disable input while sending message
+                const retryMessage = {
                     command: 'sendMessage',
-                    text: originalMessage?.text || text,
-                    originalText: text,
-                    isRetry: true
+                    retry: true
                 };
-                vscode.postMessage(messageToRetry);
-            };
-            messageElement.appendChild(retryButton);
+                vscode.postMessage(retryMessage);
+            }
+            // Append failed message element to chat history
+            const failedMessageElement = document.createElement('div');
+            failedMessageElement.className = 'message-failed';
+            const failedMessageContent = document.createElement('span');
+            failedMessageContent.className = 'failed-message-text';
+            failedMessageContent.textContent = 'Failed to send message';
+            failedMessageElement.appendChild(failedMessageContent);
+            failedMessageElement.appendChild(retryButton);
+            chatHistory.appendChild(failedMessageElement);
+        } else {
+            // Create message element
+            const messageElement = document.createElement('div');
+            const messageContent = document.createElement('span');
+            messageContent.textContent = `${sender}: ${text}`; // Show sender and text
+            messageElement.appendChild(messageContent); // Append message content to message element
+            chatHistory.appendChild(messageElement); // Append message element to chat history
         }
-
-        chatHistory.appendChild(messageElement);
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
-
-    // Send a message when the send button is clicked or Enter is pressed
-    document.getElementById('sendButton').addEventListener('click', send_message);
-    document.getElementById('message').addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            send_message();
-        }
-    });
-
-    // Clear chat history
-    document.getElementById('clearButton').addEventListener('click', () => {
-        document.getElementById('chatHistory').innerHTML = '';
-    });
-
-    // Attach a file to the chat
-    document.getElementById('attachButton').addEventListener('click', () => {
-        vscode.postMessage({ 
-            command: 'selectFile'
-        });
-    });
 
     // Handle messages from the extension
     window.addEventListener('message', event => {
@@ -94,67 +90,83 @@ window.addEventListener('DOMContentLoaded', () => {
         
         switch(message.command) {
             case 'wsStatus':
-                update_websocket_status(message.status);
+                update_ws_status(message.status);
                 break;
 
             case 'fileContent':
-                storedContext = {
-                    type: message.type || 'file',
+                attachedContext = {
+                    file: message.file,
                     content: message.content,
-                    label: message.label || 'Selected content'
                 };
-                console.log('Stored context:', storedContext);
                 update_context_indicator();
                 break;
 
             case 'sendSuccess':
-                enable_controls();
-                const messageInput = document.getElementById('message');
-                // @ts-ignore
+                allow_input(true);
                 messageInput.value = '';
                 break;
 
             case 'sendFailed':
-                enable_controls(message.text);
-                append_message(userName, message.text, true, message.originalMessage);
+                allow_input(true);
+                update_chat(null, null, true);
                 break;
 
             case 'receiveMessage':
-                append_message(message.sender, message.text);
+                update_chat(message.sender, message.text);
                 break;              
             
             case 'recording':
-                console.log('Received recording:', message.text);
-                append_message(message.sender, message.text);
+                update_chat(message.sender, message.text);
                 break;
         }
     });
 
-    // Record audio button functionality
-    const recordButton = document.getElementById('recordButton');
-    if (recordButton) {
-        recordButton.addEventListener('click', async () => {
-            if (isRecording) {
-                recordButton.textContent = 'Start recording';
-                isRecording = false;
-                vscode.postMessage({ command: 'stopRecording' });
-            } else {  
-                recordButton.textContent = 'Stop recording';
-                isRecording = true;
-                vscode.postMessage({ command: 'startRecording' });
-            }
+    // Send a message when the send button is clicked or Enter is pressed
+    sendButton.addEventListener('click', send_message);
+    messageInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            send_message();
+            console.log('Event listener added to sendButton');
+
+        }
+    });
+
+    // Record button functionality
+    recordButton.addEventListener('click', async () => {
+        if (isRecording) {
+            recordButton.textContent = 'Start recording';
+            isRecording = false;
+            vscode.postMessage({ command: 'stopRecording' });
+        } else {  
+            recordButton.textContent = 'Stop recording';
+            isRecording = true;
+            vscode.postMessage({ command: 'startRecording' });
+        }
+    });
+
+    // Attach file button functionality
+    attachButton.addEventListener('click', () => {
+        vscode.postMessage({ 
+            command: 'selectFile'
         });
-    }
+    });
+
+    // New chat button functionality
+    newChatButton.addEventListener('click', () => {
+        document.getElementById('chatHistory').innerHTML = '';
+    });
+    
 });
 
 
-function update_websocket_status(connected) {
-    wsStatusElement.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
-    wsStatusElement.title = connected ? 'Connected' : 'Disconnected';
+function update_ws_status(connected) {
+    wsStatusIndicator.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
+    wsStatusIndicator.title = connected ? 'Connected' : 'Disconnected';
 }
 
 function disable_retry() {
-    const retryButtons = document.querySelectorAll('.retry-button:not([disabled])');
+    const retryButtons = document.querySelectorAll('.retry-button');
     retryButtons.forEach(button => {
         // @ts-ignore
         button.disabled = true;
@@ -163,47 +175,27 @@ function disable_retry() {
 
 function update_context_indicator() {
     const indicator = document.getElementById('contextIndicator');
-    if (storedContext) {
-        indicator.textContent = `Context: ${storedContext.label}`;
+    if (attachedContext) {
+        indicator.textContent = `Context: ${attachedContext.file}`;
         indicator.className = 'context-indicator active';
     } else {
         indicator.className = 'context-indicator';
     }
 }
 
-function clear_stored_context() {
-    storedContext = null;
-    update_context_indicator();
-}
-
 // Add control management functions
-function disable_controls() {
-    const messageInput = document.getElementById('message');
-    const sendButton = document.getElementById('sendButton');
-    const attachButton = document.getElementById('attachButton');
-    
-    // @ts-ignore
-    messageInput.disabled = true;
-    // @ts-ignore
-    sendButton.disabled = true;
-    // @ts-ignore
-    attachButton.disabled = true;
-}
-
-function enable_controls(textToRestore = '') {
-    const messageInput = document.getElementById('message');
-    const sendButton = document.getElementById('sendButton');
-    const attachButton = document.getElementById('attachButton');
-    
-    // @ts-ignore
-    messageInput.disabled = false;
-    // @ts-ignore
-    sendButton.disabled = false;
-    // @ts-ignore
-    attachButton.disabled = false;
-    
-    if (textToRestore) {
-        // @ts-ignore
-        messageInput.value = textToRestore;
+function allow_input(allowed) {
+    if (allowed) {
+        messageInput.disabled = false;
+        recordButton.disabled = false;
+        attachButton.disabled = false;
+        sendButton.disabled = false;
+        newChatButton.disabled = false;
+    } else {
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        attachButton.disabled = true;
+        recordButton.disabled = true;
+        newChatButton.disabled = true;
     }
 }

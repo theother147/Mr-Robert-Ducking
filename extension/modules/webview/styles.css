@@ -21,7 +21,15 @@ body {
     background: var(--vscode-editor-background);
 }
 
-#message {
+/* Message input */
+#inputContainer {
+    display: flex;
+    padding: 10px;
+    gap: 8px;
+    background: var(--vscode-editor-background);
+    border-top: 1px solid var(--vscode-panel-border);
+}
+#messageInput {
     flex: 1;
     min-width: 0;
     padding: 6px;
@@ -34,23 +42,18 @@ body {
     height: auto;
 }
 
-/* Update input styling */
-#message:disabled {
+#messageInput:disabled {
     opacity: 0.6;
     background: var(--vscode-input-background);
     cursor: not-allowed;
 }
 
-/* Input */
-#inputContainer {
+/* Buttons */
+.button-group {
     display: flex;
-    padding: 10px;
-    gap: 8px;
-    background: var(--vscode-editor-background);
-    border-top: 1px solid var(--vscode-panel-border);
+    gap: 4px;
 }
 
-/* Buttons */
 #buttonContainer {
     display: flex;
     padding: 8px;
@@ -60,7 +63,7 @@ body {
     align-items: center;
 }
 
-.actionButton {
+.action-button {
     padding: 6px 12px;
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
@@ -68,14 +71,13 @@ body {
     cursor: pointer;
 }
 
-.actionButton:hover {
+.action-button:hover {
     background: var(--vscode-button-hoverBackground);
 }
 
-/* Update button styling */
-.actionButton:disabled {
+.action-button:disabled {
     opacity: 0.6;
-    background: var(--vscode-button-secondaryBackground) !important;
+    background: var(--vscode-button-secondaryBackground);
     cursor: not-allowed;
 }
 
@@ -121,27 +123,6 @@ body {
 
 .failed-message-text {
     color: var(--vscode-errorForeground);
-    font-style: italic;
-}
-
-/* Attach button */
-.button-group {
-    display: flex;
-    gap: 4px;
-}
-
-#attachButton {
-    padding: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Update attach button styling if needed */
-#attachButton:disabled {
-    opacity: 0.6;
-    background: var(--vscode-button-secondaryBackground) !important;
-    cursor: not-allowed;
 }
 
 /* Context indicator */
