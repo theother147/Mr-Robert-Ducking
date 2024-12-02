@@ -170,8 +170,19 @@ body {
     background: var(--vscode-editor-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     display: none;
+    align-items: center;
 }
 
 .context-indicator.active {
     display: block;
+}
+
+#contextText {
+    align-items: center;
+}
+
+#deleteContextButton {
+    margin-left: 8px;
+    font-size: 75%;
+    align-items: center;
 }
