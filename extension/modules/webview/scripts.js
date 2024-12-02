@@ -1,4 +1,5 @@
 const userName = 'You';
+// @ts-ignore
 const aiName = 'Rubber Duck';
 let wsStatusIndicator;
 let chatHistory;
@@ -12,6 +13,7 @@ let attachedContext;
 
 // Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
+    // @ts-ignore
     const vscode = acquireVsCodeApi();
     
     wsStatusIndicator = document.getElementById('wsStatusIndicator');
@@ -166,6 +168,7 @@ function update_ws_status(connected) {
 function disable_retry() {
     const retryButtons = document.querySelectorAll('.retry-button');
     retryButtons.forEach(button => {
+        // @ts-ignore
         button.disabled = true;
     });
 }
