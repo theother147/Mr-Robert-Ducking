@@ -9,7 +9,7 @@ const select_file = async (provider) => {
         // Get all files in workspace
         const files = await vscode.workspace.findFiles(
             "**/*",
-            "**/node_modules/**"
+            "**/node_modules/**" // Exclude node_modules
         );
         const fileItems = files.map((file) => ({
             label: vscode.workspace.asRelativePath(file),

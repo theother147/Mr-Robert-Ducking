@@ -83,6 +83,9 @@ function activate(context) {
 		);
 		context.subscriptions.push(recordingCommand);
 
+		// Register command to stop recording
+		
+
 		// Register command to select and read file
 		let selectFileCommand = vscode.commands.registerCommand(
 			"rubberduck.selectFile",

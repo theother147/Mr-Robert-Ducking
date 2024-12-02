@@ -46,10 +46,10 @@ const recording = (provider) => {
 			if (provider && provider._view) {
 				provider._view.webview.postMessage({
 					command: "recording",
-					sender: "Rubber Duck",
+					sender: "Recorder",
 					text: data.toString(),
 				});
-		}
+			}
 		});
 
 		// Add stderr handler

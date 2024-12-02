@@ -8,17 +8,17 @@
 </head>
 <body>
     <div id="buttonContainer">
-        <button id="clearButton" class="actionButton">Clear Chat</button>
-        <button id="recordButton" class="actionButton">Start recording</button>
-        <div id="wsStatus" class="ws-status" title="Disconnected"></div>
+        <button id="newChatButton" class="action-button">New Chat</button>
+        <button id="recordButton" class="action-button">Start recording</button>
+        <div id="wsStatusIndicator" class="ws-status" title="Disconnected"></div>
     </div>
     <div id="chatHistory"></div>
     <div id="contextIndicator" class="context-indicator"></div>
     <div id="inputContainer">
-        <textarea id="message" placeholder="Type a message..."></textarea>
+        <textarea id="messageInput" placeholder="Hey Rubber Duck!"></textarea>
         <div class="button-group">
-            <button id="attachButton" class="actionButton">Attach</button>
-            <button id="sendButton" class="actionButton">Send</button>
+            <button id="attachButton" class="action-button">Attach</button>
+            <button id="sendButton" class="action-button">Send</button>
         </div>
     </div>
     <script src="${scriptsUri}"></script>

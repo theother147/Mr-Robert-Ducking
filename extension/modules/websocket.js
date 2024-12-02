@@ -41,12 +41,16 @@ class WebSocketManager {
     }
 
     // Notify webview about the connection status
-    notify_webview(statusType, currentStatus) {
+    notify_webview(statusType, currentStatus, message = null) {
         if (this._provider && this._provider._view) {
-            this._provider._view.webview.postMessage({
-                type: statusType,
+            const payload = {
+                command: statusType,
                 status: currentStatus
-            });
+            };
+            if (statusType === "sendFailed") {
+                payload.message = message;
+            }
+            this._provider._view.webview.postMessage(payload);
         }
     }
 
@@ -60,14 +64,14 @@ class WebSocketManager {
         } else {
             console.error('WebSocket: Maximum resend attempts reached. Message not sent.');
             this._resendAttempt = 0; // Reset resend attempt counter
-            this.notify_webview("sendFailed", true);
+            this.notify_webview("sendFailed", true, this._pendingMessage); // Notify webview about send failure
         }
     }
 
     // Send message to WebSocket server
     send_message(message) {
         // Store message on first attempt
-        if (this._resendAttempt === 0) {
+        if (this._resendAttempt === 0 && message.retry !== true) {
             this._pendingMessage = {
                 type: "text",
                 message: message.text,
@@ -95,14 +99,14 @@ class WebSocketManager {
     
     // Handle WebSocket connection
     handle_connection() {
-        console.log('WebSocket connected');
+        console.log('WebSocket: Connected');
         this._isConnecting = false; // Reset connecting flag
         this.notify_webview("wsStatus", true); // Notify webview about connection status
     }
 
     // Handle WebSocket disconnection
     handle_disconnection() {
-        console.log('WebSocket disconnected');
+        console.log('WebSocket: Disconnected');
         this._isConnecting = false; // Reset connecting flag
         this.notify_webview("wsStatus", false); // Notify webview about connection status
         this.reconnect(); // Reconnect to WebSocket server
@@ -122,8 +126,10 @@ class WebSocketManager {
 
         // Send to webview
         if (this._provider && this._provider._view) {
+            console.log('WebSocket: Sending message to webview:', message.message);
             this._provider.postMessage({
                 command: 'receiveMessage',
+                sender: 'WebSocket',
                 text: message.message
             });
         }

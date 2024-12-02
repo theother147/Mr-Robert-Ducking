@@ -51,6 +51,10 @@
       {
         "command": "rubberduck.startRecording",
         "title": "Start Audio Recording"
+      },
+      {
+        "command": "rubberduck.stopRecording",
+        "title": "Stop Audio Recording"
       }
     ],
     "configuration": {

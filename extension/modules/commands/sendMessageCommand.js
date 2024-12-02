@@ -10,7 +10,6 @@ const send_message_to_ws = async (messageData, wsManager, provider) => {
             provider._view.webview.postMessage({
                 command: 'sendFailed',
                 text: messageData.text,
-                originalMessage: messageData
             });
         }
     }
