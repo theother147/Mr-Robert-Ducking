@@ -12,13 +12,15 @@ const recording = async (provider) => {
 
 		recordingProcess.stdout.on("data", (data) => {
 			console.log("Python output:", data.toString());
-			if (provider && provider._view) {
-				provider._view.webview.postMessage({
-					command: "recording",
-					sender: "Transcription",
-					text: data.toString(),
-				});
-		}
+			if (!data.toString().includes("[INFO]")) {
+				if (provider && provider._view) {
+					provider._view.webview.postMessage({
+						command: "recording",
+						sender: "Transcription",
+						text: data.toString(),
+					});
+				}
+			}
 		});
 
 		// Add stderr handler
