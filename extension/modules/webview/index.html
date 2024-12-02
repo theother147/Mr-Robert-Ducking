@@ -7,9 +7,8 @@
     <link rel="stylesheet" href="${stylesUri}">
 </head>
 <body>
-    <div id="buttonContainer">
+    <div class="top-menu">
         <button id="newChatButton" class="action-button">New Chat</button>
-        <button id="recordButton" class="action-button">Start recording</button>
         <div id="wsStatusIndicator" class="ws-status" title="Disconnected"></div>
     </div>
     <div id="chatHistory"></div>
@@ -17,11 +16,17 @@
         <span id="contextText"></span>
         <button id="deleteContextButton" class="delete-button" style="display: none;">&times;</button>
     </div>
-    <div id="inputContainer">
+    <div class="input-container">
         <textarea id="messageInput" placeholder="Hey Rubber Duck!"></textarea>
-        <div class="button-group">
-            <button id="attachButton" class="action-button">Attach</button>
-            <button id="sendButton" class="action-button">Send</button>
+        <div class="input-buttons">
+            <div class="left-buttons">
+                <button id="attachButton" class="action-button">Attach</button>
+            </div>
+            <div class="right-buttons">
+                <div id="recStatusIndicator" class="rec-status"></div>
+                <button id="recordButton" class="action-button">Start recording</button>
+                <button id="sendButton" class="action-button">Send</button>
+            </div>
         </div>
     </div>
     <script src="${scriptsUri}"></script>

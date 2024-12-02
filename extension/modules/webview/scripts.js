@@ -3,11 +3,12 @@ const aiName = 'Rubber Duck';
 let wsStatusIndicator;
 let chatHistory;
 let messageInput;
-let recordButton;
 let attachButton;
 let contextElement;
 let contextText;
 let deleteContextButton;
+let recordButton;
+let recStatusIndicator;
 let sendButton;
 let newChatButton;
 let isRecording = false;
@@ -21,11 +22,12 @@ window.addEventListener('DOMContentLoaded', () => {
     wsStatusIndicator = document.getElementById('wsStatusIndicator');
     chatHistory = document.getElementById('chatHistory');
     messageInput = document.getElementById('messageInput');
-    recordButton = document.getElementById('recordButton');
     attachButton = document.getElementById('attachButton');
     contextElement = document.getElementById('contextIndicator');
     contextText = document.getElementById('contextText');
     deleteContextButton = document.getElementById('deleteContextButton');
+    recStatusIndicator = document.getElementById('recStatusIndicator');
+    recordButton = document.getElementById('recordButton');
     sendButton = document.getElementById('sendButton');
     newChatButton = document.getElementById('newChatButton');
       
@@ -141,11 +143,13 @@ window.addEventListener('DOMContentLoaded', () => {
     recordButton.addEventListener('click', async () => {
         if (isRecording) {
             recordButton.textContent = 'Start recording';
+            recStatusIndicator.style.display = 'none';
             isRecording = false;
             vscode.postMessage({ command: 'stopRecording' });
             allow_input(true);
         } else {  
             recordButton.textContent = 'Stop recording';
+            recStatusIndicator.style.display = 'block';
             isRecording = true;
             vscode.postMessage({ command: 'startRecording' });
             allow_input(false);
