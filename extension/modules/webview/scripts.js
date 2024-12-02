@@ -2,10 +2,12 @@ let wsStatusElement;
 let storedContext = null;
 let isRecording = false;
 const userName = 'You';
+// @ts-ignore
 const aiName = 'Rubber Duck';
 
 // Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
+    // @ts-ignore
     const vscode = acquireVsCodeApi();
     
     wsStatusElement = document.getElementById('wsStatus');
@@ -13,6 +15,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Send a message to the extension
     function send_message() {
         const messageInput = document.getElementById('message');
+        // @ts-ignore
         const message = messageInput.value.trim();
         if (message) {
             disable_controls();
@@ -107,6 +110,7 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'sendSuccess':
                 enable_controls();
                 const messageInput = document.getElementById('message');
+                // @ts-ignore
                 messageInput.value = '';
                 break;
 
@@ -152,6 +156,7 @@ function update_websocket_status(connected) {
 function disable_retry() {
     const retryButtons = document.querySelectorAll('.retry-button:not([disabled])');
     retryButtons.forEach(button => {
+        // @ts-ignore
         button.disabled = true;
     });
 }
@@ -177,8 +182,11 @@ function disable_controls() {
     const sendButton = document.getElementById('sendButton');
     const attachButton = document.getElementById('attachButton');
     
+    // @ts-ignore
     messageInput.disabled = true;
+    // @ts-ignore
     sendButton.disabled = true;
+    // @ts-ignore
     attachButton.disabled = true;
 }
 
@@ -187,11 +195,15 @@ function enable_controls(textToRestore = '') {
     const sendButton = document.getElementById('sendButton');
     const attachButton = document.getElementById('attachButton');
     
+    // @ts-ignore
     messageInput.disabled = false;
+    // @ts-ignore
     sendButton.disabled = false;
+    // @ts-ignore
     attachButton.disabled = false;
     
     if (textToRestore) {
+        // @ts-ignore
         messageInput.value = textToRestore;
     }
 }
