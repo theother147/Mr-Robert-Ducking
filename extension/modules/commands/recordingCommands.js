@@ -28,7 +28,6 @@ const startRecording= async (provider) => {
 				if (provider && provider._view) {
 					provider._view.webview.postMessage({
 						command: "recording",
-						sender: "Transcription",
 						text: data.toString(),
 					});
 				}

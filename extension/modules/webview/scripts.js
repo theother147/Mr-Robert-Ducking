@@ -1,5 +1,4 @@
 const userName = 'You';
-// @ts-ignore
 const aiName = 'Rubber Duck';
 let wsStatusIndicator;
 let chatHistory;
@@ -112,11 +111,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case 'receiveMessage':
-                update_chat(message.sender, message.text);
+                update_chat(aiName, message.text);
                 break;              
             
             case 'recording':
-                update_chat(message.sender, message.text);
+                messageInput.value += message.text;
                 break;
         }
     });
@@ -138,10 +137,12 @@ window.addEventListener('DOMContentLoaded', () => {
             recordButton.textContent = 'Start recording';
             isRecording = false;
             vscode.postMessage({ command: 'stopRecording' });
+            allow_input(true);
         } else {  
             recordButton.textContent = 'Stop recording';
             isRecording = true;
             vscode.postMessage({ command: 'startRecording' });
+            allow_input(false);
         }
     });
 
@@ -195,7 +196,11 @@ function allow_input(allowed) {
         messageInput.disabled = true;
         sendButton.disabled = true;
         attachButton.disabled = true;
-        recordButton.disabled = true;
         newChatButton.disabled = true;
+        if (isRecording) {
+            recordButton.disabled = false;
+        } else {
+            recordButton.disabled = true;
+        }
     }
 }
