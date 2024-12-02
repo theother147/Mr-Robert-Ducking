@@ -100,7 +100,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 update_ws_status(message.status);
                 break;
 
-            case 'fileContent':
+            case 'addContext':
                 attachedContext = {
                     file: message.file,
                     content: message.content,
