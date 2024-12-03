@@ -33,21 +33,20 @@ body {
 }
 
 #messageInput {
-    flex-grow: 1;
-    min-width: 0;
     padding: 6px;
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
     font-family: inherit;
-    resize: none;
+    resize:  none;
     overflow: hidden;
-    height: auto;
+    min-height: 34px;
+    max-height: 200px;
+    box-sizing: border-box;
 }
 
 #messageInput:disabled {
     opacity: 0.6;
-    background: var(--vscode-input-background);
     cursor: not-allowed;
 }
 
@@ -74,22 +73,41 @@ body {
     align-items: center;
 }
 
-.action-button {
+.text-button, .icon-button {
     display: inline-block;
-    padding: 6px 12px;
-    background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: none;
     cursor: pointer;
 }
 
-.action-button:hover {
+.text-button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    padding: 6px 12px;
+}
+
+.icon-button {
+    display: flex;
+    background: none;
+    color: var(--vscode-input-foreground);
+    padding: 6px;
+}
+
+.text-button:hover {
     background: var(--vscode-button-hoverBackground);
 }
 
-.action-button:disabled {
+.icon-button:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
+
+.icon-button.recording:hover {
+    background: transparent;
+}
+
+.text-button:disabled, .icon-button:disabled {
     opacity: 0.6;
-    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-inactiveBackground);
     cursor: not-allowed;
 }
 
@@ -111,31 +129,6 @@ body {
 
 .ws-status.disconnected {
     background-color: var(--vscode-testing-iconFailed);
-}
-
-/* Recording indicator */
-.rec-status {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: red;
-    animation: pulsate 1s infinite;
-    display: none;
-}
-
-@keyframes pulsate {
-    0% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scale(1.15);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
 }
 
 /* Failed messages */
@@ -174,15 +167,54 @@ body {
 }
 
 .context-indicator.active {
-    display: block;
+    display: flex;
 }
 
 #contextText {
-    align-items: center;
+    display: inline-flex;
 }
 
 #deleteContextButton {
     margin-left: 8px;
-    font-size: 75%;
+    padding: 0px;
+    display: none;
+}
+
+.rec-button {
+    position: relative;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+}
+
+.rec-button.active .rec-status {
+    display: block;
+}
+
+.rec-button.active i {
+    color: rgba(255, 0, 0, 0.7);
+}
+.rec-status {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 100%;
+    border: 2px solid rgba(255, 0, 0, 0.7);
+    animation: rec-indicator 2.0s infinite;
+    display: none;
+}
+
+@keyframes rec-indicator {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

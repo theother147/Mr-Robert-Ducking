@@ -8,7 +8,6 @@ let contextElement;
 let contextText;
 let deleteContextButton;
 let recordButton;
-let recStatusIndicator;
 let sendButton;
 let newChatButton;
 let isRecording = false;
@@ -26,11 +25,17 @@ window.addEventListener('DOMContentLoaded', () => {
     contextElement = document.getElementById('contextIndicator');
     contextText = document.getElementById('contextText');
     deleteContextButton = document.getElementById('deleteContextButton');
-    recStatusIndicator = document.getElementById('recStatusIndicator');
     recordButton = document.getElementById('recordButton');
     sendButton = document.getElementById('sendButton');
     newChatButton = document.getElementById('newChatButton');
-      
+     
+    // Adjust the height of the message input based on its content
+    function adjust_input_height() {
+        const textarea = document.getElementById('messageInput');
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
     // Send a message to the extension
     function send_message() {
         const message = messageInput.value.trim();
@@ -128,6 +133,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Adjust the height of the message input based on its content
+    messageInput.addEventListener('input', adjust_input_height);
+
     // Send a message when the send button is clicked or Enter is pressed
     sendButton.addEventListener('click', send_message);
     messageInput.addEventListener('keydown', (event) => {
@@ -141,15 +149,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Record button functionality
     recordButton.addEventListener('click', async () => {
+        const recIcon = recordButton.querySelector('i');
+        const recStatus = recordButton.querySelector('.rec-button');
         if (isRecording) {
-            recordButton.textContent = 'Start recording';
-            recStatusIndicator.style.display = 'none';
+            recordButton.className = 'icon-button';
+            recordButton.title = 'Start Voice Recording';
+            recIcon.className = 'codicon codicon-mic';
+            recStatus.className = 'rec-button';
             isRecording = false;
             vscode.postMessage({ command: 'stopRecording' });
             allow_input(true);
         } else {  
-            recordButton.textContent = 'Stop recording';
-            recStatusIndicator.style.display = 'block';
+            recordButton.className = 'icon-button recording';
+            recordButton.title = 'Stop Voice Recording';
+            recIcon.className = 'codicon codicon-mic-filled';
+            recStatus.className = 'rec-button active';
             isRecording = true;
             vscode.postMessage({ command: 'startRecording' });
             allow_input(false);

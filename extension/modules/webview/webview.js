@@ -17,9 +17,8 @@ class ViewProvider {
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [
-				vscode.Uri.file(
-					path.join(this.context.extensionPath, "modules", "webview")
-				),
+				vscode.Uri.file(path.join(this.context.extensionPath, "modules", "webview")),
+				vscode.Uri.file(path.join(this.context.extensionPath, "node_modules", "@vscode/codicons", "dist")),
 			],
 		};
 
@@ -80,17 +79,23 @@ class ViewProvider {
 				)
 			)
 		);
-		const attachIconUri = this._view.webview.asWebviewUri(
+		const codiconsUri = this._view.webview.asWebviewUri(
 			vscode.Uri.file(
-				path.join(this.context.extensionPath, "resources", "attach.svg")
+				path.join(
+					this.context.extensionPath,
+					"node_modules",
+					"@vscode/codicons", 
+					"dist",
+					"codicon.css"
+				)
 			)
 		);
 
-		// Replace placeholders
+		// Replace placeholderss
 		html = html.replace("${scriptsUri}", scriptsUri.toString());
 		html = html.replace("${stylesUri}", stylesUri.toString());
-		html = html.replace("${attachIconUri}", attachIconUri.toString());
-
+		html = html.replace("${codiconsUri}", codiconsUri.toString());
+		
 		return html;
 	}
 }
