@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-from modules.controller.main import controller
 
 def get_venv_path():
     """Get the virtual environment path"""
@@ -16,7 +15,6 @@ def is_correct_venv():
     
     return Path(sys.executable).resolve() == expected_python.resolve()
 
-@controller.emits("venv_status")
 def check_venv() -> dict:
     """Check virtual environment status"""
     status = "active" if is_correct_venv() else "inactive"
@@ -25,7 +23,6 @@ def check_venv() -> dict:
         "type": "venv"
     }
 
-@controller.emits("venv_create")
 def create_venv() -> dict:
     """Create virtual environment"""
     venv_path = get_venv_path()
@@ -37,15 +34,9 @@ def create_venv() -> dict:
         "type": "venv"
     }
 
-@controller.emits("venv_restart")
-def restart_in_venv() -> dict:
-    """Restart application in virtual environment"""
+def get_venv_python():
+    """Get the path to the virtual environment's Python executable"""
     venv_path = get_venv_path()
     if sys.platform == "win32":
-        python_path = venv_path / "Scripts" / "python.exe"
-    else:
-        python_path = venv_path / "bin" / "python"
-    return {
-        "python_path": str(python_path),
-        "type": "venv"
-    } 
+        return venv_path / "Scripts" / "python.exe"
+    return venv_path / "bin" / "python" 

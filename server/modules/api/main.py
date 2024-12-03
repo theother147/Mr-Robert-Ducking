@@ -8,39 +8,41 @@ from typing import Optional, AsyncGenerator
 from modules.config.config import Config 
 from modules.utils.logger import logger
 from .types import ServerConfig
-from .session import SessionManager
 from .message_handler import MessageHandler
 
 class WebSocketAPI:
     _instance = None
     
-    def __new__(cls):
+    def __new__(cls, core=None):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, config: ServerConfig = None):
-        if not self._initialized:
-            self.session_manager = SessionManager()
-            self.message_handler = MessageHandler(self.session_manager)
+    def __init__(self, core=None):
+        if not getattr(self, '_initialized', False):
+            if core is None:
+                raise ValueError("Core services must be provided for initialization")
+            
+            logger.info("Initializing WebSocket API")
+            self.core = core
+            self.message_handler = MessageHandler(
+                self.core.session_manager,
+                self.core.llm_service
+            )
+            
+            # Initialize server config
             self.server: Optional[websockets.WebSocketServer] = None
-            self.config = config or ServerConfig(
+            self.config = ServerConfig(
                 host=Config.HOST,
                 port=Config.PORT
             )
+            
             self._initialized = True
-
-    @classmethod
-    async def get_instance(cls) -> 'WebSocketAPI':
-        """Get or create singleton instance with initialized server"""
-        if cls._instance is None:
-            cls._instance = WebSocketAPI()
-            await cls._instance._initialize_server()
-        return cls._instance
+            logger.info("WebSocket API initialized")
 
     async def _initialize_server(self) -> None:
-        """Initialize WebSocket server with timeout settings"""
+        """Initialize WebSocket server"""
         if not self.server:
             self.server = await websockets.serve(
                 self.websocket_handler,
@@ -62,7 +64,7 @@ class WebSocketAPI:
             
     async def websocket_handler(self, websocket: websockets.WebSocketServerProtocol, path: str = '/') -> None:
         """Handle incoming WebSocket connections"""
-        session_id = self.session_manager.create_session()
+        session_id = self.core.session_manager.create_session()
         logger.info(f"New WebSocket connection established - Session ID: {session_id}")
         
         try:
@@ -106,7 +108,7 @@ class WebSocketAPI:
                 await websocket.close()
             except:
                 pass
-            self.session_manager.close_session(session_id)
+            self.core.session_manager.close_session(session_id)
             self.message_handler.unregister_connection(session_id)
             logger.info(f"Session closed: {session_id}")
 

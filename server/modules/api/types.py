@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, TypedDict
 from enum import Enum
+from modules.config.config import Config
 
 class MessageType(Enum):
     ERROR = "error"
@@ -15,11 +16,11 @@ class WebSocketResponse(TypedDict):
 class ServerConfig:
     host: str
     port: int
-    max_size: int = 1024 * 1024  # 1MB max message size
-    max_connections: int = 100
-    timeout: float = 60.0
-    ping_interval: None = None  # Disable ping/pong timeouts
-    ping_timeout: None = None   # Disable ping/pong timeouts
+    max_size: int = Config.MAX_MESSAGE_SIZE
+    max_connections: int = Config.MAX_CONNECTIONS
+    timeout: float = Config.CONNECTION_TIMEOUT
+    ping_interval: None = Config.PING_INTERVAL
+    ping_timeout: None = Config.PING_TIMEOUT
 
 @dataclass
 class Session:
