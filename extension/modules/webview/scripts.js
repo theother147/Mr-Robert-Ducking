@@ -34,7 +34,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		messageInput.style.height = messageInput.scrollHeight + "px";
 	}
 
-	const previousState = vscode.getState();
+	const previousState = vscode.getState() || {};
 	chatHistory.innerHTML = previousState.chatHistoryState
 		? previousState.chatHistoryState
 		: "";
