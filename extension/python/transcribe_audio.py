@@ -9,7 +9,7 @@ def transcribe_audio():
             translate=False,
             model="turbo",
             use_vad=True,
-            save_output_recording=False,
+            save_output_recording=False
         )
         client()
     except Exception as e:
