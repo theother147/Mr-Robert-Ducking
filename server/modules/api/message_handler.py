@@ -28,14 +28,17 @@ class MessageHandler:
                 await self.send_error(websocket, Config.ERROR_MESSAGE_REQUIRED, session_id)
                 return
                 
-            # Format the prompt with any provided files
+            # Get the prompt and initialize files
             prompt = data["message"]
             files = []
             
-            if "files" in data and isinstance(data["files"], list):
+            # Handle optional files if present and valid
+            if "files" in data and isinstance(data["files"], list) and data["files"]:
                 files = data["files"]
                 prompt += Config.PROMPT_FILE_HEADER
                 for file in files:
+                    if not isinstance(file, dict) or 'filename' not in file or 'content' not in file:
+                        continue
                     # Detect language from filename extension
                     ext = file["filename"].split(".")[-1] if "." in file["filename"] else ""
                     language = Config.LANGUAGE_EXTENSIONS.get(ext, "")
@@ -56,7 +59,7 @@ class MessageHandler:
             await self.send_acknowledgement(websocket, Config.ACK_MESSAGE, session_id)
             
             # Get response from LLM
-            response = await self.llm_service.generate_response(session_id, prompt, files)
+            response = await self.llm_service.generate_response(session_id, prompt)
             
             # Send response back to client
             await websocket.send(json.dumps({

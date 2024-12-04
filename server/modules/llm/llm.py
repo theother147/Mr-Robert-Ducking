@@ -16,13 +16,11 @@ class LLM:
         self.messages = []
         logger.info("LLM service initialized successfully")
 
-    async def generate_response(self, session_id: str, prompt: str, files: list = None) -> dict:
+    async def generate_response(self, session_id: str, prompt: str) -> dict:
         """Generate a response to a prompt"""
         try:
             logger.info(f"Generating response for session {session_id}")
             logger.debug(f"Prompt: {prompt}")
-            if files:
-                logger.debug(f"Files included: {[f['filename'] for f in files]}")
             
             # Manage message history size
             if len(self.messages) >= Config.LLM_MAX_HISTORY:
