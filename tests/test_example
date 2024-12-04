@@ -1,0 +1,52 @@
+import function which is being tested
+from unittest import mock
+
+
+decorator is used to run the test cases multiple times with different inputs and expected outputs
+@pytest.mark.parametrize("input, expected_output", [
+    (1, 2),
+    (2, 3),
+    (3, 4),
+    (4, 5),
+    (5, 6),
+]) # Add more test cases as needed
+def test_function1();
+        assert function() == expected_value;
+        assert function() != not_expected_value;
+        assert function().status == expected_status;
+
+def test_get_example():
+    url = "https://run.mocky.io"  # Replace with API URL (best case would be a mock)
+    response = requests.get(url)
+
+    # Verify status code
+    assert response.status_code == 200
+
+    # Verify content-type
+    assert response.headers["Content-Type"] == "application/json; charset=UTF-8"
+
+    # Verify response structure and data
+    data = response.json()
+    assert isinstance(data, dict)
+    assert "transcribed message" in data
+    assert "status" in data
+
+create a class and mock the function within the class. Therefore the function will not be called and the mock function will be called instead
+this is useful when you want to test a function and there input that calls another function
+def test_mock_example():
+    example = Example()
+    example.function2 = mock.MagicMock()
+    example.function1()
+    example.function2.assert_called_with("test")
+
+    ------------------------------------------INFO---------------------------------------------------
+    for install pytest, run the following command:
+    pip install pytest -> used to run test cases
+    pip install requests -> to use get, post etc requests
+
+    to call the test cases, run the following command:
+    pytest
+    if there is an error, run the following command:
+    python -m pytest
+    if you want to display values use the following command:
+    python -m pytest -v

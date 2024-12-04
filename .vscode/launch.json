@@ -1,0 +1,29 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+			"name": "Launch Extension",
+			"outFiles": ["${workspaceFolder}/out/**/*.js"],
+			"request": "launch",
+			"type": "extensionHost",
+			"env": {
+				"TERM": "xterm-256color",
+			}
+		},
+		{
+			"name": "Python Debugger: Current File",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${workspaceFolder}/server/main.py",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+			"console": "integratedTerminal",
+			"env": {
+				"TERM": "xterm-256color",
+			}
+		}
+	]
+}
