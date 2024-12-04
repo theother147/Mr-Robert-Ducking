@@ -43,6 +43,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		// @ts-ignore
 		messageInput.value = previousState.messageInputState;
 		adjust_input_height();
+	} else {
+		// @ts-ignore
+		messageInput.value = "";
+		adjust_input_height();
 	}
 	// Send a message to the extension
 	function send_message() {
@@ -67,6 +71,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			vscode.postMessage(payload);
 			vscode.setState({ messageInputState: "" });
 			messageInput.value = "";
+			vscode.setState({ chatHistoryState: chatHistory.innerHTML });
 		}
 	}
 
