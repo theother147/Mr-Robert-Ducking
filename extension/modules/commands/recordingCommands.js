@@ -47,7 +47,6 @@ const startRecording= async (provider) => {
 
 const stopRecording = async () => {
 	if (recordingProcess) {
-		console.log("Stopping recording process");
 		recordingProcess.kill();
 	}
 }
