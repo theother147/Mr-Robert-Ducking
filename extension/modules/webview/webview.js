@@ -20,7 +20,7 @@ class ViewProvider {
 				vscode.Uri.file(path.join(this.context.extensionPath, "modules", "webview")),
 				vscode.Uri.file(path.join(this.context.extensionPath, "node_modules", "@vscode/codicons", "dist")),
 			],
-		};
+		};	
 
 		// Load webview HTML content
 		webviewView.webview.html = this.get_html_for_webview();

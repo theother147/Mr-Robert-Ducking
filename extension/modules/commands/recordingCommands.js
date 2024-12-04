@@ -24,7 +24,7 @@ const startRecording= async (provider) => {
 		}
 		recordingProcess.stdout.on("data", (data) => {
 			console.log("Python output:", data.toString());
-			if (!data.toString().includes("[INFO]")) {
+			if (!data.toString().includes("[")) {
 				if (provider && provider._view) {
 					provider._view.webview.postMessage({
 						command: "recording",
