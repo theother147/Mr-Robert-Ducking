@@ -75,7 +75,7 @@ class WebSocketManager {
             this._pendingMessage = {
                 type: "text",
                 message: message.text,
-                context: message.context
+                files: [message.context]
             };
         }
 

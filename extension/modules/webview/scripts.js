@@ -3,11 +3,11 @@ const aiName = 'Rubber Duck';
 let wsStatusIndicator;
 let chatHistory;
 let messageInput;
-let recordButton;
 let attachButton;
 let contextElement;
 let contextText;
 let deleteContextButton;
+let recordButton;
 let sendButton;
 let newChatButton;
 let isRecording = false;
@@ -110,13 +110,13 @@ window.addEventListener('DOMContentLoaded', () => {
 				update_ws_status(message.status);
 				break;
 
-			case "fileContent":
-				attachedContext = {
-					file: message.file,
-					content: message.content,
-				};
-				update_context();
-				break;
+            case 'addContext':
+                attachedContext = {
+                    file: message.file,
+                    content: message.content,
+                };
+                update_context();
+                break;
 
 			case "sendSuccess":
 				allow_input(true);
@@ -141,6 +141,9 @@ window.addEventListener('DOMContentLoaded', () => {
 		vscode.setState({ messageInputState: messageInput.value });
 	});
 
+    // Adjust the height of the message input based on its content
+    messageInput.addEventListener('input', adjust_input_height);
+
 	// Send a message when the send button is clicked or Enter is pressed
 	sendButton.addEventListener("click", send_message);
 	messageInput.addEventListener("keydown", (event) => {
@@ -150,20 +153,28 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
-	// Record button functionality
-	recordButton.addEventListener("click", async () => {
-		if (isRecording) {
-			recordButton.textContent = "Start recording";
-			isRecording = false;
-			vscode.postMessage({ command: "stopRecording" });
-			allow_input(true);
-		} else {
-			recordButton.textContent = "Stop recording";
-			isRecording = true;
-			vscode.postMessage({ command: "startRecording" });
-			allow_input(false);
-		}
-	});
+    // Record button functionality
+    recordButton.addEventListener('click', async () => {
+        const recIcon = recordButton.querySelector('i');
+        const recStatus = recordButton.querySelector('.rec-button');
+        if (isRecording) {
+            recordButton.className = 'icon-button';
+            recordButton.title = 'Start Voice Recording';
+            recIcon.className = 'codicon codicon-mic';
+            recStatus.className = 'rec-button';
+            isRecording = false;
+            vscode.postMessage({ command: 'stopRecording' });
+            allow_input(true);
+        } else {  
+            recordButton.className = 'icon-button recording';
+            recordButton.title = 'Stop Voice Recording';
+            recIcon.className = 'codicon codicon-mic-filled';
+            recStatus.className = 'rec-button active';
+            isRecording = true;
+            vscode.postMessage({ command: 'startRecording' });
+            allow_input(false);
+        }
+    });
 
 	// Attach file button functionality
 	attachButton.addEventListener("click", () => {

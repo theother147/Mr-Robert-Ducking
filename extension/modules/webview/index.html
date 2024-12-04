@@ -2,26 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rubber Duck AI Assistant</title>
+    <link rel="stylesheet" href="${codiconsUri}">
     <link rel="stylesheet" href="${stylesUri}">
 </head>
 <body>
-    <div id="buttonContainer">
-        <button id="newChatButton" class="action-button">New Chat</button>
-        <button id="recordButton" class="action-button">Start recording</button>
+    <div class="top-menu">
+        <button id="newChatButton" class="icon-button" title="New Chat"><i class="codicon codicon-clear-all"></i></button>
         <div id="wsStatusIndicator" class="ws-status" title="Disconnected"></div>
     </div>
     <div id="chatHistory"></div>
     <div id="contextIndicator" class="context-indicator">
         <span id="contextText"></span>
-        <button id="deleteContextButton" class="delete-button" style="display: none;">&times;</button>
+        <button id="deleteContextButton" class="icon-button" title="Remove Context"><i class="codicon codicon-close"></i></button>
     </div>
-    <div id="inputContainer">
+    <div class="input-container">
         <textarea id="messageInput" placeholder="Hey Rubber Duck!"></textarea>
-        <div class="button-group">
-            <button id="attachButton" class="action-button">Attach</button>
-            <button id="sendButton" class="action-button">Send</button>
+        <div class="input-buttons">
+            <div class="left-buttons">
+                <button id="attachButton" class="icon-button" title="Attach Context"><i class="codicon codicon-new-file"></i></button>
+            </div>
+            <div class="right-buttons">
+                <button id="recordButton" class="icon-button" title="Start Voice Recording">
+                        <div class="rec-button">
+                            <div class="rec-status"></div>
+                            <i class="codicon codicon-mic"></i>
+                        </div>
+                </button>
+                <button id="sendButton" class="icon-button" title="Send"><i class="codicon codicon-send"></i></button>
+            </div>
         </div>
     </div>
     <script src="${scriptsUri}"></script>

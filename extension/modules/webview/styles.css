@@ -22,39 +22,49 @@ body {
 }
 
 /* Message input */
-#inputContainer {
+.input-container {
     display: flex;
+    flex-direction: column;
     padding: 10px;
     gap: 8px;
     background: var(--vscode-editor-background);
     border-top: 1px solid var(--vscode-panel-border);
+    overflow: hidden;
 }
+
 #messageInput {
-    flex: 1;
-    min-width: 0;
     padding: 6px;
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
     font-family: inherit;
-    resize: none;
+    resize:  none;
     overflow: hidden;
-    height: auto;
+    min-height: 34px;
+    max-height: 200px;
+    box-sizing: border-box;
 }
 
 #messageInput:disabled {
     opacity: 0.6;
-    background: var(--vscode-input-background);
     cursor: not-allowed;
 }
 
 /* Buttons */
-.button-group {
+.input-buttons {
     display: flex;
-    gap: 4px;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+    white-space: nowrap;
 }
 
-#buttonContainer {
+.left-buttons, .right-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.top-menu {
     display: flex;
     padding: 8px;
     gap: 8px;
@@ -63,21 +73,41 @@ body {
     align-items: center;
 }
 
-.action-button {
-    padding: 6px 12px;
-    background: var(--vscode-button-background);
+.text-button, .icon-button {
+    display: inline-block;
     color: var(--vscode-button-foreground);
     border: none;
     cursor: pointer;
 }
 
-.action-button:hover {
+.text-button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    padding: 6px 12px;
+}
+
+.icon-button {
+    display: flex;
+    background: none;
+    color: var(--vscode-input-foreground);
+    padding: 6px;
+}
+
+.text-button:hover {
     background: var(--vscode-button-hoverBackground);
 }
 
-.action-button:disabled {
+.icon-button:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
+
+.icon-button.recording:hover {
+    background: transparent;
+}
+
+.text-button:disabled, .icon-button:disabled {
     opacity: 0.6;
-    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-inactiveBackground);
     cursor: not-allowed;
 }
 
@@ -133,8 +163,58 @@ body {
     background: var(--vscode-editor-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     display: none;
+    align-items: center;
 }
 
 .context-indicator.active {
+    display: flex;
+}
+
+#contextText {
+    display: inline-flex;
+}
+
+#deleteContextButton {
+    margin-left: 8px;
+    padding: 0px;
+    display: none;
+}
+
+.rec-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rec-button.active .rec-status {
     display: block;
+}
+
+.rec-button.active i {
+    color: rgba(255, 0, 0, 0.7);
+}
+.rec-status {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 100%;
+    border: 2px solid rgba(255, 0, 0, 0.7);
+    animation: rec-indicator 2.0s infinite;
+    display: none;
+}
+
+@keyframes rec-indicator {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

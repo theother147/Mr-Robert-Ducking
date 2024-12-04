@@ -69,7 +69,8 @@
     }
   },
   "dependencies": {
-    "ws": "^8.18.0",
-    "child_process": "^1.0.2"
+    "@vscode/codicons": "^0.0.36",
+    "child_process": "^1.0.2",
+    "ws": "^8.18.0"
   }
 }
