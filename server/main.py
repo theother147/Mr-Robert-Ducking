@@ -1,59 +1,71 @@
 # Description: Main entry point for the server. Starts the WebSocket server and listens for incoming requests.
 import sys
+import asyncio
 from pathlib import Path
 
 # Add server directory to Python path
 server_dir = Path(__file__).parent
 sys.path.insert(0, str(server_dir))
 
-# First, verify and activate virtual environment
-from modules.install.install import verify_installation, install_dependencies
-
-def ensure_environment():
-    """Ensure we're in the correct environment with all dependencies"""
-    try:
-        if not verify_installation():
-            install_dependencies()
-            # If we get here, it means we need to restart in the venv
-            sys.exit(1)
-    except KeyboardInterrupt:
-        print("\nSetup interrupted by user")
-        sys.exit(0)
-
-# Run environment check before any other imports
-if __name__ == "__main__":
-    ensure_environment()
-
-# Only import the rest after environment is verified
-import asyncio
-from modules.controller.triggers.server_trigger import check_env, start_server, stop_server
 from modules.utils.logger import logger
+from modules.api import WebSocketAPI
+from modules.llm.llm import LLM
+from modules.api.session import SessionManager
 
-async def cleanup(api=None):
+class Core:
+    """
+    Core application class that manages service initialization and lifecycle
+    """
+    def __init__(self):
+        logger.info("Initializing application core")
+        self.llm_service = None
+        self.session_manager = None
+        
+    async def initialize(self):
+        """Initialize all core services"""
+        logger.info("Starting core services")
+        
+        # Initialize LLM first as other services depend on it
+        self.llm_service = LLM()
+        
+        # Initialize session management
+        self.session_manager = SessionManager()
+        
+        logger.info("Core services initialized successfully")
+        
+    async def shutdown(self):
+        """Cleanup and shutdown all services"""
+        logger.info("Shutting down core services")
+        # Add cleanup for services that need it
+        self.llm_service = None
+        self.session_manager = None
+
+async def cleanup(api=None, core=None):
     """Cleanup function to ensure graceful shutdown"""
     if api:
-        await stop_server(api)
+        await api.shutdown()
+    if core:
+        await core.shutdown()
     logger.info("Server stopped by user.")
 
 async def main():
     api = None
+    core = None
     try:
-        # Check environment using emitter
-        await check_env()
+        # Initialize core services first
+        core = Core()
+        await core.initialize()
         
-        # Start the server
-        result = await start_server()
-        api = result[1]['api']
-        
-        # Run forever
-        await asyncio.Future()
+        # Start the API with initialized services
+        api = WebSocketAPI(core)
+        await api.run_server()
         
     except asyncio.CancelledError:
         logger.info("Shutting down...")
     except Exception as e:
         logger.error(f"Server error: {e}")
     finally:
-        await cleanup(api)
+        await cleanup(api, core)
 
 async def run_with_cleanup():
     """Run the main coroutine with proper cleanup on cancellation"""

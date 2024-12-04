@@ -50,7 +50,7 @@ const select_file = async (provider) => {
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: "addContext",
-                        file: "Text selection",
+                        filename: "Text selection",
                         content: selected.text,
                     });
                 }
@@ -72,7 +72,7 @@ const select_file = async (provider) => {
                 if (provider && provider._view) {
                     provider._view.webview.postMessage({
                         command: "addContext",
-                        file: `File: ${selected.label}`,
+                        filename: selected.label,
                         content: text,
                     });
                 }

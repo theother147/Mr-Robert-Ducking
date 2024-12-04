@@ -62,7 +62,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			};
 			if (attachedContext) {
 				payload.context = {
-					file: attachedContext.file,
+					filename: attachedContext.filename,
 					content: attachedContext.content,
 				};
 				attachedContext = null;
@@ -123,7 +123,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			case 'addContext':
 				attachedContext = {
-					file: message.file,
+					filename: message.filename,
 					content: message.content,
 				};
 				update_context();
@@ -227,7 +227,7 @@ function disable_retry() {
 
 function update_context() {
     if (attachedContext) {
-        contextText.textContent = `Context: ${attachedContext.file}`;
+        contextText.textContent = `Context: ${attachedContext.filename}`;
         contextElement.className = 'context-indicator active';
         deleteContextButton.style.display = 'inline';
     } else {

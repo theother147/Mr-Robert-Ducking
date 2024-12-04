@@ -64,7 +64,7 @@ function activate(context) {
 		// Register command to select and read file
 		let selectFileCommand = vscode.commands.registerCommand(
 			"rubberduck.selectFile",
-			async () => {
+			() => {
 				select_file(provider);
 			}
 		);
