@@ -21,7 +21,7 @@ class ViewProvider {
 					path.join(this.context.extensionPath, "modules", "webview")
 				),
 			],
-		};
+		};	
 
 		// Load webview HTML content
 		webviewView.webview.html = this.get_html_for_webview();
