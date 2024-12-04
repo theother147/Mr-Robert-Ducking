@@ -1,4 +1,13 @@
 # install/utils/download.py
+import logging
+
+# Configure root logger first
+logging.basicConfig(level=logging.WARNING)
+
+# Disable all debug logging
+for name in logging.root.manager.loggerDict:
+    logging.getLogger(name).setLevel(logging.WARNING)
+
 import requests
 import subprocess
 import json
@@ -7,12 +16,8 @@ import time
 from typing import Optional, Union, Dict, Any
 import os
 import sys
-import logging
 from ..config import InstallerConfig
 from .progress import ProgressBar
-
-# Configure logging to suppress debug messages
-logging.getLogger('httpx').setLevel(logging.WARNING)
 
 class Downloader:
     """Utility class for downloading files with progress tracking and retries."""
@@ -69,50 +74,75 @@ class Downloader:
             import ollama
             
             # Initialize progress tracking
-            current_file = None
             progress_bar = None
+            last_status = None
+            current_digest = None
             
             # Pull model and process the stream
             client = ollama.Client()
-            for response in client.pull(model_name, stream=True):
-                if not isinstance(response, dict):
-                    continue
+            
+            try:
+                for response in client.pull(model_name, stream=True):
+                    # Get attributes from ProgressResponse object
+                    status = getattr(response, 'status', '')
+                    completed = getattr(response, 'completed', None)
+                    total = getattr(response, 'total', None)
+                    digest = getattr(response, 'digest', '')
                     
-                status = response.get('status', '')
-                
-                if status == 'pulling manifest':
-                    print("pulling manifest")
+                    # Track new layer downloads
+                    if digest and digest != current_digest:
+                        if progress_bar:
+                            progress_bar.update(progress_bar.total)  # Complete previous bar
+                            print()  # New line for next progress bar
+                        current_digest = digest
+                        progress_bar = None
                     
-                elif status == 'downloading':
-                    completed = response.get('completed', 0)
-                    total = response.get('total', 0)
+                    # Show status messages for non-download operations
+                    if status and status != last_status and not any(s in status for s in ['pulling']):
+                        if progress_bar:
+                            print()  # New line after progress bar
+                        print(f"{status}...")
+                        last_status = status
+                        continue
                     
-                    # Create or update progress bar
-                    if progress_bar is None:
-                        progress_bar = ProgressBar(
-                            total=total,
-                            prefix=f"pulling {model_name}...",
-                            width=40,
-                            show_size=True
-                        )
-                    
-                    # Update progress
-                    if progress_bar and total > 0:
+                    # Update progress bar for downloads
+                    if total and completed and total > 0 and 'pulling' in status:
+                        if progress_bar is None:
+                            progress_bar = ProgressBar(
+                                total=total,
+                                prefix=f"pulling {current_digest[:12] if current_digest else model_name}...",
+                                width=40,
+                                show_size=True
+                            )
                         progress_bar.update(completed)
-                        
-                elif status == 'verifying sha256 digest':
-                    if progress_bar:
-                        progress_bar.update(progress_bar.total)  # Complete the bar
-                    print("verifying sha256 digest")
+                
+                # If we got here without error, assume success
+                if progress_bar:
+                    progress_bar.update(progress_bar.total)  # Complete final bar
+                    print()
+                print("Download completed successfully!")
+                return
                     
-                elif status == 'writing manifest':
-                    print("writing manifest")
-                    
-                elif status == 'success':
-                    print("success")
+            except Exception as e:
+                if "already exists" in str(e).lower():
+                    print("Model already installed!")
+                    return
+                raise
+                
+            # Handle error cases
+            if progress_bar and progress_bar.current > 0:
+                # If we made some progress but didn't complete
+                raise RuntimeError("Download started but did not complete. Please try again.")
+            else:
+                raise RuntimeError("Model download stream ended without success status")
             
         except Exception as e:
-            raise RuntimeError(f"Failed to pull model: {str(e)}")
+            error_msg = str(e)
+            if "connection refused" in error_msg.lower():
+                error_msg = "Ollama server is not running. Please start Ollama and try again."
+            elif "no such file or directory" in error_msg.lower():
+                error_msg = "Ollama is not installed or not in PATH. Please install Ollama first."
+            raise RuntimeError(f"Failed to pull model: {error_msg}")
     
     def download(self, source: Union[str, Dict[str, Any]], destination: Optional[Path] = None) -> None:
         """

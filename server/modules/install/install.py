@@ -7,8 +7,15 @@ import shutil
 import logging
 
 # Set up basic logging first
-logging.basicConfig(format='%(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(levelname)s: %(message)s',
+    level=logging.DEBUG,
+    stream=sys.stderr
+)
 logger = logging.getLogger(__name__)
+
+# Set debug level for ollama-related loggers
+logging.getLogger('modules.install.utils.download').setLevel(logging.DEBUG)
 
 def get_venv_path() -> Path:
     """Get the virtual environment path"""
