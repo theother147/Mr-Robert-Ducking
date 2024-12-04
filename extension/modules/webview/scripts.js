@@ -29,15 +29,21 @@ window.addEventListener('DOMContentLoaded', () => {
 	sendButton = document.getElementById("sendButton");
 	newChatButton = document.getElementById("newChatButton");
 
+	function adjust_input_height() {
+		messageInput.style.height = "auto";
+		messageInput.style.height = messageInput.scrollHeight + "px";
+	}
+
 	const previousState = vscode.getState();
 	chatHistory.innerHTML = previousState.chatHistoryState
 		? previousState.chatHistoryState
 		: "";
-	// @ts-ignore
-	messageInput.value = previousState.messageInputState
-		? previousState.messageInputState
-		: "";
 
+	if (previousState.messageInputState) {
+		// @ts-ignore
+		messageInput.value = previousState.messageInputState;
+		adjust_input_height();
+	}
 	// Send a message to the extension
 	function send_message() {
 		const message = messageInput.value.trim();
@@ -58,9 +64,9 @@ window.addEventListener('DOMContentLoaded', () => {
 				attachedContext = null;
 				update_context();
 			}
-            vscode.postMessage(payload);
-            vscode.setState({ messageInputState: "" });
-            messageInput.value = "";
+			vscode.postMessage(payload);
+			vscode.setState({ messageInputState: "" });
+			messageInput.value = "";
 		}
 	}
 
@@ -110,13 +116,13 @@ window.addEventListener('DOMContentLoaded', () => {
 				update_ws_status(message.status);
 				break;
 
-            case 'addContext':
-                attachedContext = {
-                    file: message.file,
-                    content: message.content,
-                };
-                update_context();
-                break;
+			case 'addContext':
+				attachedContext = {
+					file: message.file,
+					content: message.content,
+				};
+				update_context();
+				break;
 
 			case "sendSuccess":
 				allow_input(true);
@@ -134,15 +140,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			case "recording":
 				messageInput.value += message.text;
+				vscode.setState({ messageInputState: messageInput.value });
+				adjust_input_height();
 				break;
 		}
 	});
-	messageInput.addEventListener("change", () => {
-		vscode.setState({ messageInputState: messageInput.value });
-	});
 
-    // Adjust the height of the message input based on its content
-    messageInput.addEventListener('input', adjust_input_height);
+	// Adjust the height of the message input based on its content
+	messageInput.addEventListener('input', () => {
+		adjust_input_height();
+		vscode.setState({ messageInputState: messageInput.value });
+	}
+	);
 
 	// Send a message when the send button is clicked or Enter is pressed
 	sendButton.addEventListener("click", send_message);
