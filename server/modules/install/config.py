@@ -1,15 +1,15 @@
 # install/config.py
 from pathlib import Path
 import sys
+import os
 from typing import Dict, Any
-from .exceptions import PlatformError
 
 class InstallerConfig:
     """Configuration settings for the installation process."""
     
     # Base paths
-    VENV_DIR = Path(__file__).parent.parent.parent / ".venv" 
-    TEMP_DIR = Path(sys.prefix) / "temp"
+    VENV_DIR = Path(__file__).parent.parent.parent / ".venv"
+    TEMP_DIR = Path(os.getenv('TEMP', '/tmp'))
     
     # Platform specific settings
     PLATFORM_CONFIG: Dict[str, Dict[str, Any]] = {
@@ -31,12 +31,6 @@ class InstallerConfig:
         }
     }
     
-    # Model settings
-    MODEL_CONFIG = {
-        "name": "codellama",
-        "version": "latest"
-    }
-    
     # Download settings
     DOWNLOAD_CONFIG = {
         "chunk_size": 8192,
@@ -49,5 +43,5 @@ class InstallerConfig:
     def get_platform_config(cls) -> Dict[str, Any]:
         """Get configuration for current platform."""
         if sys.platform not in cls.PLATFORM_CONFIG:
-            raise PlatformError(sys.platform)
+            raise RuntimeError(f"Unsupported platform: {sys.platform}")
         return cls.PLATFORM_CONFIG[sys.platform]
