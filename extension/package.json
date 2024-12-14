@@ -37,24 +37,24 @@
     },
     "commands": [
       {
-        "command": "rubberduck.openWebview",
-        "title": "Open Webview"
-      },
-      {
         "command": "rubberduck.sendMessage",
-        "title": "Send Message to WebSocket"
+        "title": "Rubber Duck: Send Message"
       },
       {
         "command": "rubberduck.selectFile",
-        "title": "Select File for Attachment"
+        "title": "Rubber Duck: Attach Context"
       },
       {
         "command": "rubberduck.startRecording",
-        "title": "Start Audio Recording"
+        "title": "Rubber Duck: Start Audio Recording"
       },
       {
         "command": "rubberduck.stopRecording",
-        "title": "Stop Audio Recording"
+        "title": "Rubber Duck: Stop Audio Recording"
+      },
+      {
+        "command": "rubberduck.newChat",
+        "title": "Rubber Duck: New Chat"
       }
     ],
     "configuration": {
