@@ -70,7 +70,8 @@ window.addEventListener('DOMContentLoaded', () => {
 			}
 			vscode.postMessage(payload);
 			vscode.setState({ messageInputState: "" });
-			messageInput.value = "";
+			messageInput.value = ""; // Clear the message input
+			adjust_input_height(); // Adjust message input height
 			vscode.setState({ chatHistoryState: chatHistory.innerHTML });
 		}
 	}
