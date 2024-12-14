@@ -34,6 +34,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		messageInput.style.height = messageInput.scrollHeight + "px";
 	}
 
+	function scroll_to_bottom() {	
+		chatHistory.scrollTop = chatHistory.scrollHeight;
+	}
+
 	const previousState = vscode.getState() || {};
 	chatHistory.innerHTML = previousState.chatHistoryState
 		? previousState.chatHistoryState
@@ -48,6 +52,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		messageInput.value = "";
 		adjust_input_height();
 	}
+
+	// Scroll to the bottom of the chat history
+	scroll_to_bottom();
+
 	// Send a message to the extension
 	function send_message() {
 		const message = messageInput.value.trim();
@@ -109,7 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			messageElement.appendChild(messageContent); // Append message content to message element
 			chatHistory.appendChild(messageElement); // Append message element to chat history
 		}
-		chatHistory.scrollTop = chatHistory.scrollHeight;
+		scroll_to_bottom() // Scroll to the bottom of the chat history
 		vscode.setState({ chatHistoryState: chatHistory.innerHTML });
 	}
 
