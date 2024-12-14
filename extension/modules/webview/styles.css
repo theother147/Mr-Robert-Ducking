@@ -21,6 +21,11 @@ body {
     background: var(--vscode-editor-background);
 }
 
+.sender {
+    font-weight: bold;
+    margin-top: 0;
+}
+
 /* Message input */
 .input-container {
     display: flex;
@@ -218,3 +223,4 @@ body {
         opacity: 1;
     }
 }
+

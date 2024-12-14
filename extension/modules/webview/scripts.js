@@ -113,7 +113,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			// Create message element
 			const messageElement = document.createElement("div");
 			const messageContent = document.createElement("span");
-			messageContent.textContent = `${sender}: ${text}`; // Show sender and text
+			messageContent.innerHTML = `<p class="sender">${sender}:</p>${text}`; // Show sender and text
 			messageElement.appendChild(messageContent); // Append message content to message element
 			chatHistory.appendChild(messageElement); // Append message element to chat history
 		}

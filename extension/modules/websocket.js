@@ -1,6 +1,7 @@
 // Description: Module for handling WebSocket communication
 const vscode = require("vscode");
 const WebSocket = require("ws");
+const marked = require('marked');
 
 class WebSocketManager {
 	constructor() {
@@ -136,12 +137,15 @@ class WebSocketManager {
 		const message = JSON.parse(messageString); // Try to parse the string as JSON
 		console.log("WebSocket: Received message:", message);
 
+		// Convert markdown to HTML
+		const htmlContent = marked.parse(message.message);
+
 		// Send to webview
 		if (this._provider && this._provider._view) {
-			console.log("WebSocket: Sending message to webview:", message.message);
+			console.log("WebSocket: Sending message to webview:", htmlContent);
 			this._provider._view.webview.postMessage({
 				command: "receiveMessage",
-				text: message.message,
+				text: htmlContent,
 			});
 		}
 	}
