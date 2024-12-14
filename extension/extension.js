@@ -69,6 +69,19 @@ function activate(context) {
 			}
 		);
 		context.subscriptions.push(selectFileCommand);
+
+		// Register command to begin new chat session
+		let newChatCommand = vscode.commands.registerCommand(
+			"rubberduck.newChat",
+			() => {
+				wsManager.close_connection();
+				setTimeout(() => {
+					wsManager.connect();
+				}, 1000); // 1-second delay
+			}
+		);
+		context.subscriptions.push(newChatCommand);
+
 	} catch (error) {
 		console.error("Extension activation failed:", error);
 		vscode.window.showErrorMessage(

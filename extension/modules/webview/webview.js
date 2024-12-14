@@ -41,6 +41,9 @@ class ViewProvider {
 					case "selectFile":
 						vscode.commands.executeCommand("rubberduck.selectFile");
 						break;
+					case "newChat":
+						vscode.commands.executeCommand("rubberduck.newChat");
+						break;
 				}
 			},
 			undefined,

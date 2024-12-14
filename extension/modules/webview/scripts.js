@@ -217,6 +217,9 @@ window.addEventListener('DOMContentLoaded', () => {
 		chatHistory.innerHTML = "";
 		vscode.setState({ messageInputState: "" });
 		vscode.setState({ chatHistoryState: "" });
+
+		// Send a message to the extension to close and reopen the WebSocket connection
+		vscode.postMessage({ command: "newChat" });
 	});
 });
 
