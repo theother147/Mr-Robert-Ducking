@@ -224,3 +224,20 @@ body {
     }
 }
 
+pre {
+    font-family: var(--vscode-editor-font-family);
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-editor-background);
+    border: 1px var(--vscode-widget-border) solid;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    padding: 12px;
+}
+
+code {
+    font-family: var(--vscode-editor-font-family);
+    color: var(--vscode-editor-foreground);
+    white-space: pre-wrap;
+    padding: 0;
+    background: none;
+}
