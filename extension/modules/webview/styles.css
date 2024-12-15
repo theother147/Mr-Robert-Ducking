@@ -224,6 +224,7 @@ body {
     }
 }
 
+/* Code blocks in response */
 pre {
     font-family: var(--vscode-editor-font-family);
     color: var(--vscode-editor-foreground);

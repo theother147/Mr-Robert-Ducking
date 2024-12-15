@@ -1,6 +1,6 @@
 const vscode = require("vscode");
 
-const select_file = async (provider) => {
+const selectFile = async (provider) => {
     try {
         // Get all files in workspace if available
         let files = [];
@@ -98,4 +98,4 @@ const select_file = async (provider) => {
     }
 }
 
-module.exports = select_file;
+module.exports = selectFile;
