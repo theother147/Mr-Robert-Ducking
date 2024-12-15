@@ -203,6 +203,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			case "clearChat":
 				clearChat();
+				break;
 
 			case "recordingStarted":
 				updateRecording(true);
