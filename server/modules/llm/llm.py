@@ -1,5 +1,5 @@
 from ollama import Client
-import os
+
 from modules.utils.logger import logger
 from modules.config.config import Config
 
