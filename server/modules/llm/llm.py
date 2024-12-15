@@ -14,7 +14,7 @@ class LLM:
         logger.info("Initializing LLM service")
         self.ollama = Client(host="http://ollama:11434")
         self.context = None
-        self.messages = []
+        self.sessions = {}
         logger.info("LLM service initialized successfully")
 
     async def generate_response(self, session_id: str, prompt: str) -> dict:
