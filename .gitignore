@@ -169,5 +169,8 @@ cython_debug/
 .ntvs_analysis.dat
 node_modules/
 extension/node_modules/
+extension/rubberduck-0.0.1.vsix
+extension/rubberduck-0.0.1.vsix.zip
+extension/dist/extension.js
 
 

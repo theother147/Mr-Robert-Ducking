@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  whisperlive:
+    build:
+      context: ./whisperLive_server
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./whisperLive_server:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: python main.py
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./server:/app
+    environment:
+      - PYTHONUNBUFFERED=1
