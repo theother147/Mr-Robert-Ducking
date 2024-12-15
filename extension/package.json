@@ -1,8 +1,10 @@
 {
-  "name": "rubberduck",
-  "displayName": "rubberduck",
-  "description": "Rubber Duck AI Assistant",
+  "name": "rubberduck-ai-assistant",
+  "displayName": "Rubber Duck AI Assistant",
+  "description": "AI-powered debugging assistant for VS Code",
+  "publisher": "Softwaretechnik-Labor",
   "version": "0.0.1",
+  "icon": "resources/icon_extension.png",
   "engines": {
     "vscode": "^1.94.0"
   },
@@ -22,7 +24,7 @@
         {
           "id": "rubberduck",
           "title": "Rubber Duck AI Assistant",
-          "icon": "resources/logo.svg"
+          "icon": "resources/icon_webview.svg"
         }
       ]
     },
@@ -37,24 +39,24 @@
     },
     "commands": [
       {
-        "command": "rubberduck.openWebview",
-        "title": "Open Webview"
-      },
-      {
         "command": "rubberduck.sendMessage",
-        "title": "Send Message to WebSocket"
+        "title": "Rubber Duck: Send Message"
       },
       {
         "command": "rubberduck.selectFile",
-        "title": "Select File for Attachment"
+        "title": "Rubber Duck: Attach Context"
       },
       {
         "command": "rubberduck.startRecording",
-        "title": "Start Audio Recording"
+        "title": "Rubber Duck: Start Audio Recording"
       },
       {
         "command": "rubberduck.stopRecording",
-        "title": "Stop Audio Recording"
+        "title": "Rubber Duck: Stop Audio Recording"
+      },
+      {
+        "command": "rubberduck.newChat",
+        "title": "Rubber Duck: New Chat"
       }
     ],
     "configuration": {
@@ -71,6 +73,7 @@
   "dependencies": {
     "@vscode/codicons": "^0.0.36",
     "child_process": "^1.0.2",
+    "marked": "^15.0.3",
     "ws": "^8.18.0"
   }
 }

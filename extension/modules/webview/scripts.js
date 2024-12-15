@@ -29,9 +29,17 @@ window.addEventListener('DOMContentLoaded', () => {
 	sendButton = document.getElementById("sendButton");
 	newChatButton = document.getElementById("newChatButton");
 
-	function adjust_input_height() {
+	function focusOnInput() {
+		document.getElementById('messageInput').focus();
+	}
+
+	function adjustInputHeight() {
 		messageInput.style.height = "auto";
 		messageInput.style.height = messageInput.scrollHeight + "px";
+	}
+
+	function scrollToBottom() {	
+		chatHistory.scrollTop = chatHistory.scrollHeight;
 	}
 
 	const previousState = vscode.getState() || {};
@@ -42,19 +50,23 @@ window.addEventListener('DOMContentLoaded', () => {
 	if (previousState.messageInputState) {
 		// @ts-ignore
 		messageInput.value = previousState.messageInputState;
-		adjust_input_height();
+		adjustInputHeight();
 	} else {
 		// @ts-ignore
 		messageInput.value = "";
-		adjust_input_height();
+		adjustInputHeight();
 	}
+
+	scrollToBottom(); // Scroll to the bottom of the chat history
+	focusOnInput(); // Focus on the message input
+
 	// Send a message to the extension
-	function send_message() {
+	function sendMessage() {
 		const message = messageInput.value.trim();
 		if (message) {
-			allow_input(false); // Disable input while sending message
-			disable_retry(); // Disable retry buttons
-			update_chat(userName, message); // Update chat history with the message
+			allowInput(false); // Disable input while sending message
+			disableRetry(); // Disable retry buttons
+			updateChat(userName, message); // Update chat history with the message
 
 			const payload = {
 				command: "sendMessage",
@@ -66,17 +78,39 @@ window.addEventListener('DOMContentLoaded', () => {
 					content: attachedContext.content,
 				};
 				attachedContext = null;
-				update_context();
+				updateContext();
 			}
 			vscode.postMessage(payload);
 			vscode.setState({ messageInputState: "" });
-			messageInput.value = "";
+			messageInput.value = ""; // Clear the message input
+			adjustInputHeight(); // Adjust message input height
 			vscode.setState({ chatHistoryState: chatHistory.innerHTML });
+		} else {
+			vscode.postMessage({
+				command: "showInfo",
+				text: "Please enter a message to send."
+			});
+			focusOnInput();
 		}
 	}
 
+	function addProcessingIndicator() {
+		const processingDots = document.createElement("div");
+		processingDots.className = "processing-dots";
+		processingDots.innerHTML = `
+			<span></span>
+			<span></span>
+			<span></span>
+		`;
+		chatHistory.appendChild(processingDots);
+	}
+
+	function removeProcessingIndicator() {
+		const dots = document.getElementsByClassName("processing-dots");
+		Array.from(dots).forEach(dot => dot.remove());
+	}
 	// Append a message to the chat history
-	function update_chat(sender = null, text = null, failed = false) {
+	function updateChat(sender = null, text = null, failed = false) {
 		if (failed) {
 			// Create retry button if message failed to send
 			const retryButton = document.createElement("button");
@@ -84,13 +118,17 @@ window.addEventListener('DOMContentLoaded', () => {
 			retryButton.textContent = "Retry";
 			retryButton.onclick = () => {
 				retryButton.disabled = true;
-				allow_input(false); // Disable input while sending message
+				allowInput(false); // Disable input while sending message
+				addProcessingIndicator();
+				scrollToBottom();
+				focusOnInput();
 				const retryMessage = {
 					command: "sendMessage",
 					retry: true,
 				};
 				vscode.postMessage(retryMessage);
 			};
+			removeProcessingIndicator();
 			// Append failed message element to chat history
 			const failedMessageElement = document.createElement("div");
 			failedMessageElement.className = "message-failed";
@@ -100,16 +138,53 @@ window.addEventListener('DOMContentLoaded', () => {
 			failedMessageElement.appendChild(failedMessageContent);
 			failedMessageElement.appendChild(retryButton);
 			chatHistory.appendChild(failedMessageElement);
-		} else {
-			// Create message element
+		} else if (sender === userName) {
 			const messageElement = document.createElement("div");
-			const messageContent = document.createElement("span");
-			messageContent.textContent = `${sender}: ${text}`; // Show sender and text
-			messageElement.appendChild(messageContent); // Append message content to message element
-			chatHistory.appendChild(messageElement); // Append message element to chat history
+			messageElement.innerHTML = `
+				<p class="sender">${sender}:</p>
+				<p>${text}</p>
+			`;
+			chatHistory.appendChild(messageElement);
+			addProcessingIndicator();
+		} else if (sender === aiName) {
+			removeProcessingIndicator();
+			const messageElement = document.createElement("div");
+			messageElement.className = "message-container";
+			messageElement.innerHTML = `<p class="sender">${sender}:</p><p>${text}</p>`;
+			chatHistory.appendChild(messageElement);
 		}
-		chatHistory.scrollTop = chatHistory.scrollHeight;
+		
+		scrollToBottom();
+		focusOnInput();
 		vscode.setState({ chatHistoryState: chatHistory.innerHTML });
+	}
+
+	// Clear the chat history
+	function clearChat() {
+		messageInput.value = "";
+		chatHistory.innerHTML = "";
+		vscode.setState({ messageInputState: "" });
+		vscode.setState({ chatHistoryState: "" });
+	}
+
+	function updateRecording(startRecording) {
+        const recIcon = recordButton.querySelector('i');
+        const recStatus = recordButton.querySelector('.rec-button');
+        if (startRecording) {
+            recordButton.className = 'icon-button recording';
+            recordButton.title = 'Stop Voice Recording';
+            recIcon.className = 'codicon codicon-mic-filled';
+            recStatus.className = 'rec-button active';
+            isRecording = true;
+            allowInput(false);
+        } else {  
+			recordButton.className = 'icon-button';
+            recordButton.title = 'Start Voice Recording';
+            recIcon.className = 'codicon codicon-mic';
+            recStatus.className = 'rec-button';
+            isRecording = false;
+            allowInput(true);
+        }
 	}
 
 	// Handle messages from the extension
@@ -118,7 +193,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 		switch (message.command) {
 			case "wsStatus":
-				update_ws_status(message.status);
+				updateWsStatus(message.status);
 				break;
 
 			case 'addContext':
@@ -126,68 +201,68 @@ window.addEventListener('DOMContentLoaded', () => {
 					filename: message.filename,
 					content: message.content,
 				};
-				update_context();
+				updateContext();
 				break;
 
 			case "sendSuccess":
-				allow_input(true);
+				allowInput(true);
 				messageInput.value = "";
 				break;
 
 			case "sendFailed":
-				allow_input(true);
-				update_chat(null, null, true);
+				allowInput(true);
+				updateChat(null, null, true);
 				break;
 
 			case "receiveMessage":
-				update_chat(aiName, message.text);
+				updateChat(aiName, message.text);
 				break;
 
 			case "recording":
 				messageInput.value += message.text;
 				vscode.setState({ messageInputState: messageInput.value });
-				adjust_input_height();
+				adjustInputHeight();
+				break;
+			
+			case "triggerSend":
+				sendMessage();
+				break;
+
+			case "clearChat":
+				clearChat();
+				break;
+
+			case "recordingStarted":
+				updateRecording(true);
+				break;
+			
+			case "recordingStopped":
+				updateRecording(false);
 				break;
 		}
 	});
 
 	// Adjust the height of the message input based on its content
 	messageInput.addEventListener('input', () => {
-		adjust_input_height();
+		adjustInputHeight();
 		vscode.setState({ messageInputState: messageInput.value });
 	}
 	);
 
 	// Send a message when the send button is clicked or Enter is pressed
-	sendButton.addEventListener("click", send_message);
+	sendButton.addEventListener("click", sendMessage);
 	messageInput.addEventListener("keydown", (event) => {
 		if (event.key === "Enter" && !event.shiftKey) {
 			event.preventDefault();
-			send_message();
+			sendMessage();
 		}
 	});
 
     // Record button functionality
     recordButton.addEventListener('click', async () => {
-        const recIcon = recordButton.querySelector('i');
-        const recStatus = recordButton.querySelector('.rec-button');
-        if (isRecording) {
-            recordButton.className = 'icon-button';
-            recordButton.title = 'Start Voice Recording';
-            recIcon.className = 'codicon codicon-mic';
-            recStatus.className = 'rec-button';
-            isRecording = false;
-            vscode.postMessage({ command: 'stopRecording' });
-            allow_input(true);
-        } else {  
-            recordButton.className = 'icon-button recording';
-            recordButton.title = 'Stop Voice Recording';
-            recIcon.className = 'codicon codicon-mic-filled';
-            recStatus.className = 'rec-button active';
-            isRecording = true;
-            vscode.postMessage({ command: 'startRecording' });
-            allow_input(false);
-        }
+		vscode.postMessage({ 
+			command: isRecording ? 'stopRecording' : 'startRecording' 
+		});
     });
 
 	// Attach file button functionality
@@ -200,24 +275,22 @@ window.addEventListener('DOMContentLoaded', () => {
 	// Delete context button functionality
 	document
 		.getElementById("deleteContextButton")
-		.addEventListener("click", delete_context);
+		.addEventListener("click", deleteContext);
 
 	// New chat button functionality
 	newChatButton.addEventListener("click", () => {
-		messageInput.value = "";
-		chatHistory.innerHTML = "";
-		vscode.setState({ messageInputState: "" });
-		vscode.setState({ chatHistoryState: "" });
+		clearChat(); // Clear the chat history
+		vscode.postMessage({ command: "newChat" }); // Execute extension command to start a new chat session
 	});
 });
 
 
-function update_ws_status(connected) {
+function updateWsStatus(connected) {
     wsStatusIndicator.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
     wsStatusIndicator.title = connected ? 'Connected' : 'Disconnected';
 }
 
-function disable_retry() {
+function disableRetry() {
     const retryButtons = document.querySelectorAll('.retry-button');
     retryButtons.forEach(button => {
         // @ts-ignore
@@ -225,7 +298,7 @@ function disable_retry() {
     });
 }
 
-function update_context() {
+function updateContext() {
     if (attachedContext) {
         contextText.textContent = `Context: ${attachedContext.filename}`;
         contextElement.className = 'context-indicator active';
@@ -237,13 +310,13 @@ function update_context() {
     }
 }
 
-function delete_context() {
+function deleteContext() {
     attachedContext = null;
-    update_context();
+    updateContext();
 } 
 
 // Add control management functions
-function allow_input(allowed) {
+function allowInput(allowed) {
     if (allowed) {
         messageInput.disabled = false;
         recordButton.disabled = false;

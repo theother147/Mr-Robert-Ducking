@@ -1,21 +1,21 @@
 const vscode = require("vscode");
 
-const select_file = async (provider) => {
+const selectFile = async (provider) => {
     try {
-        if (!vscode.workspace.workspaceFolders) {
-            throw new Error("No workspace folder open");
+        // Get all files in workspace if available
+        let files = [];
+        if (vscode.workspace.workspaceFolders) {
+            files = await vscode.workspace.findFiles(
+                "**/*", // Globally search for all files
+                "**/node_modules/**" // Exclude node_modules
+            );
         }
-
-        // Get all files in workspace
-        const files = await vscode.workspace.findFiles(
-            "**/*", // Globally search for all files
-            "**/node_modules/**" // Exclude node_modules
-        );
 
         // Map files to quick pick items
         const fileItems = files.map((file) => ({
             type: "file",
             label: vscode.workspace.asRelativePath(file),
+            description: "", // Only show relative path for workspace files
             uri: file,
         }));
 
@@ -23,6 +23,19 @@ const select_file = async (provider) => {
         const editor = vscode.window.activeTextEditor;
         const selection = editor?.selection;
         const selectedText = editor?.document.getText(selection);
+
+        // Add currently open files option if they are not part of the workspace
+        const openFiles = vscode.workspace.textDocuments.filter(
+            (doc) => !files.some((file) => file.fsPath === doc.uri.fsPath)
+        );
+        openFiles.forEach((doc) => {
+            fileItems.push({
+                type: "file",
+                label: doc.fileName,
+                description: doc.uri.fsPath, // Show path for non-workspace files
+                uri: doc.uri,
+            });
+        });
 
         // Combine selected text and files into one array
         let items = [
@@ -85,4 +98,4 @@ const select_file = async (provider) => {
     }
 }
 
-module.exports = select_file;
+module.exports = selectFile;
