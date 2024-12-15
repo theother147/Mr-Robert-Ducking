@@ -282,12 +282,12 @@ function allowInput(allowed) {
         recordButton.disabled = false;
         attachButton.disabled = false;
         sendButton.disabled = false;
-        // newChatButton.disabled = false;
+        newChatButton.disabled = false;
     } else {
         messageInput.disabled = true;
         sendButton.disabled = true;
         attachButton.disabled = true;
-        // newChatButton.disabled = true;
+        newChatButton.disabled = true;
         if (isRecording) {
             recordButton.disabled = false;
         } else {
