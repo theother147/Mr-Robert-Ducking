@@ -132,6 +132,14 @@ window.addEventListener('DOMContentLoaded', () => {
 		focusOnInput(); // Focus on the message input
 	}
 
+	// Clear the chat history
+	function clearChat() {
+		messageInput.value = "";
+		chatHistory.innerHTML = "";
+		vscode.setState({ messageInputState: "" });
+		vscode.setState({ chatHistoryState: "" });
+	}
+
 	// Handle messages from the extension
 	window.addEventListener("message", (event) => {
 		const message = event.data;
@@ -172,6 +180,9 @@ window.addEventListener('DOMContentLoaded', () => {
 			case "triggerSend":
 				sendMessage();
 				break;
+
+			case "clearChat":
+				clearChat();
 		}
 	});
 
@@ -228,13 +239,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	// New chat button functionality
 	newChatButton.addEventListener("click", () => {
-		messageInput.value = "";
-		chatHistory.innerHTML = "";
-		vscode.setState({ messageInputState: "" });
-		vscode.setState({ chatHistoryState: "" });
-
-		// Send a message to the extension to close and reopen the WebSocket connection
-		vscode.postMessage({ command: "newChat" });
+		clearChat(); // Clear the chat history
+		vscode.postMessage({ command: "newChat" }); // Execute extension command to start a new chat session
 	});
 });
 
@@ -276,12 +282,12 @@ function allowInput(allowed) {
         recordButton.disabled = false;
         attachButton.disabled = false;
         sendButton.disabled = false;
-        newChatButton.disabled = false;
+        // newChatButton.disabled = false;
     } else {
         messageInput.disabled = true;
         sendButton.disabled = true;
         attachButton.disabled = true;
-        newChatButton.disabled = true;
+        // newChatButton.disabled = true;
         if (isRecording) {
             recordButton.disabled = false;
         } else {

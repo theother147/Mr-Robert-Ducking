@@ -100,6 +100,12 @@ function activate(context) {
     let newChatCommand = vscode.commands.registerCommand(
       "rubberduck.newChat",
       () => {
+        // Notify webview to clear chat history
+        provider._view.webview.postMessage({
+          command: 'clearChat'
+        });
+
+        // Close and re-open WebSocket connection
         if (checkWebviewVisible()) {
           wsManager.closeConnection();
           setTimeout(() => {
@@ -109,6 +115,7 @@ function activate(context) {
       }
     );
     context.subscriptions.push(newChatCommand);
+    
   } catch (error) {
     console.error("Extension activation failed:", error);
     vscode.window.showErrorMessage(
