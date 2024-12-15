@@ -13,7 +13,6 @@ class LLM:
         """
         logger.info("Initializing LLM service")
         self.ollama = Client(host="http://ollama:11434")
-        self.context = None
         self.sessions = {}
         logger.info("LLM service initialized successfully")
 
