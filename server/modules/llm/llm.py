@@ -12,8 +12,7 @@ class LLM:
         """
         logger.info("Initializing LLM service")
         self.ollama = ollama
-        self.context = None
-        self.messages = []
+        self.sessions = {}
         logger.info("LLM service initialized successfully")
 
     async def generate_response(self, session_id: str, prompt: str) -> dict:
@@ -21,27 +20,31 @@ class LLM:
         try:
             logger.info(f"Generating response for session {session_id}")
             logger.debug(f"Prompt: {prompt}")
-            
-            # Manage message history size
-            if len(self.messages) >= Config.LLM_MAX_HISTORY:
-                self.messages = self.messages[-Config.LLM_MAX_HISTORY:]
-                logger.debug(f"Trimmed message history to {Config.LLM_MAX_HISTORY} messages")
-            
-            # Append the user message to the messages list
-            self.messages.append({"role": "user", "content": prompt})
-            logger.debug("Added user message to context")
+
+            if len(self.sessions) == 0 or session_id not in self.sessions:
+                self.sessions[session_id] = [{"role": "user", "content": prompt}]
+                logger.debug("Added new session and user message to context")
+            else:
+                # Manage message history size
+                if len(self.sessions[session_id]) >= Config.LLM_MAX_HISTORY:
+                    self.sessions[session_id] = self.sessions[session_id][-Config.LLM_MAX_HISTORY:]
+                    logger.debug(f"Trimmed message history to {Config.LLM_MAX_HISTORY} messages")
+
+                # Append the user message to the messages list
+                self.sessions[session_id].append({"role": "user", "content": prompt})
+                logger.debug("Added user message to context")
             
             # Create a chat response
             logger.info("Sending request to Ollama")
             response = self.ollama.chat(
                 model=Config.LLM_MODEL,
-                messages=self.messages,
+                messages=self.sessions[session_id],
                 stream=Config.LLM_STREAM
             )
             logger.debug("Received response from Ollama")
             
             # Append the response to the messages list
-            self.messages.append(response["message"])
+            self.sessions[session_id].append(response["message"])
             logger.debug("Added response to context")
             
             result = {

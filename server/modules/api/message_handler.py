@@ -56,7 +56,7 @@ class MessageHandler:
             self.register_connection(session_id, websocket)
             
             # Send acknowledgment that prompt was received and is being processed
-            await self.send_acknowledgement(websocket, Config.ACK_MESSAGE, session_id)
+            #await self.send_acknowledgement(websocket, Config.ACK_MESSAGE, session_id)
             
             # Get response from LLM
             response = await self.llm_service.generate_response(session_id, prompt)
