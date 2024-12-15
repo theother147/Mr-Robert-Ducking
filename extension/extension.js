@@ -1,4 +1,4 @@
-const { startRecording, stopRecording } = require("./modules/commands/recordingCommands");
+const { startRecording, stopRecording, getRecordingStatus } = require("./modules/commands/recordingCommands");
 const selectFile = require("./modules/commands/selectFileCommand");
 const sendMessageToWs = require("./modules/commands/sendMessageCommand");
 const vscode = require("vscode");
@@ -53,6 +53,11 @@ function activate(context) {
           if (messageData) {
             sendMessageToWs(messageData, wsManager, provider);
           } else {
+            // Don't allow sending messages while recording is in progress
+            if (getRecordingStatus()) {
+              vscode.window.showInformationMessage("Cannot send messages while recording is in progress"); 
+              return;
+            }
             // Trigger send message from webview if no message data is provided
             provider._view.webview.postMessage({
               command: "triggerSend"
@@ -100,13 +105,20 @@ function activate(context) {
     let newChatCommand = vscode.commands.registerCommand(
       "rubberduck.newChat",
       () => {
-        // Notify webview to clear chat history
-        provider._view.webview.postMessage({
-          command: 'clearChat'
-        });
-
-        // Close and re-open WebSocket connection
         if (checkWebviewVisible()) {
+
+          // Don't allow starting new chat while recording is in progress
+          if (getRecordingStatus()) {
+            vscode.window.showInformationMessage("Cannot start new chat while recording is in progress"); 
+            return;
+          }
+
+          // Notify webview to clear chat history
+          provider._view.webview.postMessage({
+            command: 'clearChat'
+          });
+
+          // Close and re-open WebSocket connection
           wsManager.closeConnection();
           setTimeout(() => {
             wsManager.connect();

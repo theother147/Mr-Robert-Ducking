@@ -78,4 +78,4 @@ const stopRecording = async (provider) => {
     }
 }
 
-module.exports = { startRecording, stopRecording };
+module.exports = { startRecording, stopRecording, getRecordingStatus: () => isRecording};
