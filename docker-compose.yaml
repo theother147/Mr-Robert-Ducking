@@ -22,6 +22,7 @@ services:
       - PYTHONUNBUFFERED=1
 
   ollama:
+    hostname: ollama
     image: ollama/ollama:latest
     volumes:
         - ./ollama/entrypoint.sh:/entrypoint.sh
