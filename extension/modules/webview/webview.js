@@ -53,6 +53,9 @@ class ViewProvider {
           case "newChat":
             vscode.commands.executeCommand("rubberduck.newChat");
             break;
+          case "showInfo":
+            vscode.window.showInformationMessage(message.text);
+            break;
         }
       },
       undefined,

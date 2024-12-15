@@ -85,6 +85,12 @@ window.addEventListener('DOMContentLoaded', () => {
 			messageInput.value = ""; // Clear the message input
 			adjustInputHeight(); // Adjust message input height
 			vscode.setState({ chatHistoryState: chatHistory.innerHTML });
+		} else {
+			vscode.postMessage({
+				command: "showInfo",
+				text: "Please enter a message to send."
+			});
+			focusOnInput();
 		}
 	}
 
@@ -161,6 +167,10 @@ window.addEventListener('DOMContentLoaded', () => {
 				messageInput.value += message.text;
 				vscode.setState({ messageInputState: messageInput.value });
 				adjustInputHeight();
+				break;
+			
+			case "triggerSend":
+				sendMessage();
 				break;
 		}
 	});

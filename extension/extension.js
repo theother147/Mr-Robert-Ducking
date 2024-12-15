@@ -37,7 +37,7 @@ function activate(context) {
     // Check webview visibility
     function checkWebviewVisible() {
       if (!provider.isWebviewVisible()) {
-        vscode.window.showErrorMessage(
+        vscode.window.showInformationMessage(
           "Please open the Rubber Duck AI Assistant view first"
         );
         return false;
@@ -50,7 +50,14 @@ function activate(context) {
       "rubberduck.sendMessage",
       (messageData) => {
         if (checkWebviewVisible()) {
-          sendMessageToWs(messageData, wsManager, provider);
+          if (messageData) {
+            sendMessageToWs(messageData, wsManager, provider);
+          } else {
+            // Trigger send message from webview if no message data is provided
+            provider._view.webview.postMessage({
+              command: "triggerSend"
+            });
+          }
         }
       }
     );
