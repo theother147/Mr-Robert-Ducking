@@ -94,6 +94,21 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
+	function addProcessingIndicator() {
+		const processingDots = document.createElement("div");
+		processingDots.className = "processing-dots";
+		processingDots.innerHTML = `
+			<span></span>
+			<span></span>
+			<span></span>
+		`;
+		chatHistory.appendChild(processingDots);
+	}
+
+	function removeProcessingIndicator() {
+		const dots = document.getElementsByClassName("processing-dots");
+		Array.from(dots).forEach(dot => dot.remove());
+	}
 	// Append a message to the chat history
 	function updateChat(sender = null, text = null, failed = false) {
 		if (failed) {
@@ -104,12 +119,16 @@ window.addEventListener('DOMContentLoaded', () => {
 			retryButton.onclick = () => {
 				retryButton.disabled = true;
 				allowInput(false); // Disable input while sending message
+				addProcessingIndicator();
+				scrollToBottom();
+				focusOnInput();
 				const retryMessage = {
 					command: "sendMessage",
 					retry: true,
 				};
 				vscode.postMessage(retryMessage);
 			};
+			removeProcessingIndicator();
 			// Append failed message element to chat history
 			const failedMessageElement = document.createElement("div");
 			failedMessageElement.className = "message-failed";
@@ -119,17 +138,25 @@ window.addEventListener('DOMContentLoaded', () => {
 			failedMessageElement.appendChild(failedMessageContent);
 			failedMessageElement.appendChild(retryButton);
 			chatHistory.appendChild(failedMessageElement);
-		} else {
-			// Create message element
+		} else if (sender === userName) {
 			const messageElement = document.createElement("div");
-			const messageContent = document.createElement("span");
-			messageContent.innerHTML = `<p class="sender">${sender}:</p>${text}`; // Show sender and text
-			messageElement.appendChild(messageContent); // Append message content to message element
-			chatHistory.appendChild(messageElement); // Append message element to chat history
+			messageElement.innerHTML = `
+				<p class="sender">${sender}:</p>
+				<p>${text}</p>
+			`;
+			chatHistory.appendChild(messageElement);
+			addProcessingIndicator();
+		} else if (sender === aiName) {
+			removeProcessingIndicator();
+			const messageElement = document.createElement("div");
+			messageElement.className = "message-container";
+			messageElement.innerHTML = `<p class="sender">${sender}:</p><p>${text}</p>`;
+			chatHistory.appendChild(messageElement);
 		}
-		scrollToBottom() // Scroll to the bottom of the chat history
+		
+		scrollToBottom();
+		focusOnInput();
 		vscode.setState({ chatHistoryState: chatHistory.innerHTML });
-		focusOnInput(); // Focus on the message input
 	}
 
 	// Clear the chat history
