@@ -26,3 +26,5 @@ services:
     volumes:
         - ./ollama/entrypoint.sh:/entrypoint.sh
     entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+    ports:
+        - "11434:11434"
