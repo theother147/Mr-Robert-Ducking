@@ -15,9 +15,6 @@
 		"onStartupFinished"
 	],
 	"main": "./extension.js",
-	"files": [
-		"webview/**/*"
-	],
 	"contributes": {
 		"viewsContainers": {
 			"activitybar": [
