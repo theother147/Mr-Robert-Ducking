@@ -79,7 +79,7 @@ function activate(context) {
       "rubberduck.stopRecording",
       () => {
         if (checkWebviewVisible()) {
-          stopRecording();
+          stopRecording(provider);
         }
       }
     );

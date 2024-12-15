@@ -140,6 +140,26 @@ window.addEventListener('DOMContentLoaded', () => {
 		vscode.setState({ chatHistoryState: "" });
 	}
 
+	function updateRecording(startRecording) {
+        const recIcon = recordButton.querySelector('i');
+        const recStatus = recordButton.querySelector('.rec-button');
+        if (startRecording) {
+            recordButton.className = 'icon-button recording';
+            recordButton.title = 'Stop Voice Recording';
+            recIcon.className = 'codicon codicon-mic-filled';
+            recStatus.className = 'rec-button active';
+            isRecording = true;
+            allowInput(false);
+        } else {  
+			recordButton.className = 'icon-button';
+            recordButton.title = 'Start Voice Recording';
+            recIcon.className = 'codicon codicon-mic';
+            recStatus.className = 'rec-button';
+            isRecording = false;
+            allowInput(true);
+        }
+	}
+
 	// Handle messages from the extension
 	window.addEventListener("message", (event) => {
 		const message = event.data;
@@ -183,6 +203,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			case "clearChat":
 				clearChat();
+
+			case "recordingStarted":
+				updateRecording(true);
+				break;
+			
+			case "recordingStopped":
+				updateRecording(false);
+				break;
 		}
 	});
 
@@ -204,25 +232,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Record button functionality
     recordButton.addEventListener('click', async () => {
-        const recIcon = recordButton.querySelector('i');
-        const recStatus = recordButton.querySelector('.rec-button');
-        if (isRecording) {
-            recordButton.className = 'icon-button';
-            recordButton.title = 'Start Voice Recording';
-            recIcon.className = 'codicon codicon-mic';
-            recStatus.className = 'rec-button';
-            isRecording = false;
-            vscode.postMessage({ command: 'stopRecording' });
-            allowInput(true);
-        } else {  
-            recordButton.className = 'icon-button recording';
-            recordButton.title = 'Stop Voice Recording';
-            recIcon.className = 'codicon codicon-mic-filled';
-            recStatus.className = 'rec-button active';
-            isRecording = true;
-            vscode.postMessage({ command: 'startRecording' });
-            allowInput(false);
-        }
+		vscode.postMessage({ 
+			command: isRecording ? 'stopRecording' : 'startRecording' 
+		});
     });
 
 	// Attach file button functionality
