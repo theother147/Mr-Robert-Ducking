@@ -29,6 +29,10 @@ window.addEventListener('DOMContentLoaded', () => {
 	sendButton = document.getElementById("sendButton");
 	newChatButton = document.getElementById("newChatButton");
 
+	function focus_input() {
+		document.getElementById('messageInput').focus();
+	}
+
 	function adjust_input_height() {
 		messageInput.style.height = "auto";
 		messageInput.style.height = messageInput.scrollHeight + "px";
@@ -53,8 +57,8 @@ window.addEventListener('DOMContentLoaded', () => {
 		adjust_input_height();
 	}
 
-	// Scroll to the bottom of the chat history
-	scroll_to_bottom();
+	scroll_to_bottom(); // Scroll to the bottom of the chat history
+	focus_input(); // Focus on the message input
 
 	// Send a message to the extension
 	function send_message() {
@@ -119,6 +123,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 		scroll_to_bottom() // Scroll to the bottom of the chat history
 		vscode.setState({ chatHistoryState: chatHistory.innerHTML });
+		focus_input(); // Focus on the message input
 	}
 
 	// Handle messages from the extension
