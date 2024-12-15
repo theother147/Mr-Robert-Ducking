@@ -1,11 +1,10 @@
-version: "3.8"
 services:
   whisperlive:
     build:
       context: ./whisperLive_server
       dockerfile: Dockerfile.gpu
     ports:
-      - "8080:8080"
+      - "9090:9090"
     volumes:
       - ./whisperLive_server:/app
     environment:
@@ -15,10 +14,14 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: python main.py
     ports:
       - "8765:8765"
     volumes:
       - ./server:/app
     environment:
       - PYTHONUNBUFFERED=1
+
+  ollama:
+    build:
+      context: ./ollama
+      dockerfile: Dockerfile

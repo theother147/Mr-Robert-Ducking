@@ -3,7 +3,7 @@ from typing import Dict
 
 class Config:
     # Server settings
-    HOST = "localhost"
+    HOST = "0.0.0.0"
     PORT = 8765
     LOG_LEVEL = "DEBUG"
 

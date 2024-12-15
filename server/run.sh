@@ -21,4 +21,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Starting server..."
-python main.py 
+# python main.py 
