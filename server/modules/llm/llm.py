@@ -1,4 +1,5 @@
-import ollama
+from ollama import Client
+import os
 from modules.utils.logger import logger
 from modules.config.config import Config
 
@@ -11,8 +12,9 @@ class LLM:
         Initialize the LLM object
         """
         logger.info("Initializing LLM service")
-        self.ollama = ollama
-        self.sessions = {}
+        self.ollama = Client(host="http://ollama:11434")
+        self.context = None
+        self.messages = []
         logger.info("LLM service initialized successfully")
 
     async def generate_response(self, session_id: str, prompt: str) -> dict:
