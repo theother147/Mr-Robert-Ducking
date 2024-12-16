@@ -21,7 +21,7 @@ function activate(context) {
   try {
     // Start Whisper server
     const pythonExecutablePath = getPythonExecutablePath();
-    const scriptPath = path.join(__dirname, "python", "run_server.py");
+    const scriptPath = path.join(__dirname, "python", "client.py");
     transcriptionServer = spawn(pythonExecutablePath, ["-u", scriptPath]);
 
     wsManager = new WebSocketManager(); // Initialize WebSocket manager
