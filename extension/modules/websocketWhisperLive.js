@@ -64,6 +64,20 @@ class WhisperliveWebSocketManager {
 		console.error("WebSocket error:", error);
 	}
 
+	sendMessage(message) {
+		// Store message on first attempt
+		if (this._ws.readyState === WebSocket.OPEN) {
+			try {
+				this._ws.send(JSON.stringify(message));
+				console.log("WebSocket: Message sent:", message);
+			} catch (error) {
+				console.error(`WebSocket: Failed to send message:`, error);
+			}
+		} else {
+			console.error("WebSocket: Not connected, message not sent");
+		}
+	}
+
 	// Handle incoming messages from the WebSocket server
 	handleMessage(data) {
 		// Convert buffer to string

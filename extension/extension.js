@@ -1,4 +1,4 @@
-const { startRecording, stopRecording, getRecordingStatus } = require("./modules/commands/recordingCommands");
+const { startRecording, stopRecording, getRecordingStatus } = require("./modules/commands/transcribeCommand");
 const selectFile = require("./modules/commands/selectFileCommand");
 const sendMessageToWs = require("./modules/commands/sendMessageCommand");
 const vscode = require("vscode");
@@ -70,25 +70,18 @@ function activate(context) {
 
     // Register command to start recording
     let startRecordingCommand = vscode.commands.registerCommand(
-      "rubberduck.startRecording",
+      "rubberduck.transcribe",
       () => {
         if (checkWebviewVisible()) {
-          startRecording(provider);
+          if (!getRecordingStatus()) {
+            startRecording(provider);
+          } else {
+            stopRecording(provider);
+          }
         }
       }
     );
     context.subscriptions.push(startRecordingCommand);
-
-    // Register command to stop recording
-    let stopRecordingCommand = vscode.commands.registerCommand(
-      "rubberduck.stopRecording",
-      () => {
-        if (checkWebviewVisible()) {
-          stopRecording(provider);
-        }
-      }
-    );
-    context.subscriptions.push(stopRecordingCommand);
 
     // Register command to select and read file
     let selectFileCommand = vscode.commands.registerCommand(

@@ -41,11 +41,8 @@ class ViewProvider {
           case "sendMessage":
             vscode.commands.executeCommand("rubberduck.sendMessage", message);
             break;
-          case "startRecording":
-            vscode.commands.executeCommand("rubberduck.startRecording");
-            break;
-          case "stopRecording":
-            vscode.commands.executeCommand("rubberduck.stopRecording");
+          case "transcribe":
+            vscode.commands.executeCommand("rubberduck.transcribe");
             break;
           case "selectFile":
             vscode.commands.executeCommand("rubberduck.selectFile");
