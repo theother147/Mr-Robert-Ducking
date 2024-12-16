@@ -261,7 +261,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Record button functionality
     recordButton.addEventListener('click', async () => {
 		vscode.postMessage({ 
-			command: isRecording ? 'stopRecording' : 'startRecording' 
+			command: "transcribe",
 		});
     });
 

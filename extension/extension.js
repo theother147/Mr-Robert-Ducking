@@ -4,6 +4,7 @@ const sendMessageToWs = require("./modules/commands/sendMessageCommand");
 const vscode = require("vscode");
 const { exec } = require("child_process");
 const { WebSocketManager } = require("./modules/websocket");
+const { WhisperliveWebSocketManager } = require("./modules/websocketWhisperLive");
 const { ViewProvider } = require("./modules/webview/webview");
 const fs = require("fs");
 const path = require("path");
@@ -14,6 +15,7 @@ let wsManager;
 let provider;
 let transcriptionServer;
 
+let wslManager;
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -28,6 +30,10 @@ function activate(context) {
     provider = new ViewProvider(context); // Initialize webview provider
     wsManager.setProvider(provider); // Share provider with WebSocket module
     wsManager.connect(); // Connect to WebSocket server
+
+    wslManager = new WhisperliveWebSocketManager(); // Initialize WhisperLive WebSocket manager
+    wslManager.setProvider(provider); // Share provider with WhisperLive WebSocket module
+    wslManager.connect(); // Connect to WhisperLive WebSocket server
 
     // Register the webview provider to create UI
     context.subscriptions.push(
@@ -72,13 +78,13 @@ function activate(context) {
     let transcribeCommand = vscode.commands.registerCommand(
       "rubberduck.transcribe",
       () => {
-        if (checkWebviewVisible()) {
+        
           if (!getRecordingStatus()) {
-            startRecording(wslManager);
+            startRecording(provider, wslManager);
           } else {
-            stopRecording(wslManager);
+            stopRecording(provider, wslManager);
           }
-        }
+        
       }
     );
     context.subscriptions.push(transcribeCommand);

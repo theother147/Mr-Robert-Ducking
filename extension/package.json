@@ -41,14 +41,14 @@
 				"title": "Rubber Duck: Send Message"
 			},
 			{
-				"key": "ctrl+shift+r+a",
+				"key": "ctrl+shift+r+f",
 				"command": "rubberduck.selectFile",
 				"title": "Rubber Duck: Attach Context"
 			},
 			{
-				"key": "ctrl+shift+r+t",
+				"key": "ctrl+shift+r+a",
 				"command": "rubberduck.transcribe",
-				"title": "Rubber Duck: Transcribe"
+				"title": "Rubber Duck: Start/Stop Voice Recording"
 			},
 			{
 				"key": "ctrl+shift+r+n",
@@ -63,6 +63,11 @@
 					"type": "string",
 					"default": "ws://localhost:8765",
 					"description": "WebSocket server URL"
+				}, 
+				"rubberduck.wslUrl": {
+					"type": "string",
+					"default": "ws://localhost:8766",
+					"description": "WhisperLive WebSocket server URL"
 				}
 			}
 		}

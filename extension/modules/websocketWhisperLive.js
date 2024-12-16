@@ -8,7 +8,7 @@ class WhisperliveWebSocketManager {
 		this._ws = null;
 		this._wsUrl = vscode.workspace
 			.getConfiguration("rubberduck")
-			.get("webSocketUrl", "ws://localhost:8766"); // Get WebSocket URL from the configuration (package.json)
+			.get("wslUrl", "ws://localhost:8766"); // Get WebSocket URL from the configuration (package.json)
 		this._isConnecting = false; // Flag to indicate if WebSocket is connecting
 		this._reconnectDelay = 5000; // Reconnect delay in milliseconds
 		this._resendDelay = 1000; // Resend delay in milliseconds
@@ -80,21 +80,23 @@ class WhisperliveWebSocketManager {
 
 	// Handle incoming messages from the WebSocket server
 	handleMessage(data) {
-		// Convert buffer to string
-		const messageString = data.toString(); // Convert buffer to string
-		const message = JSON.parse(messageString); // Try to parse the string as JSON
-		console.log("WebSocket: Received message:", message);
+		console.log("WebSocket: Received raw data");
+		try {
+			// Convert buffer to string and parse JSON
+			const messageString = data.toString();
+			const message = JSON.parse(messageString);
+			console.log("WebSocket: Parsed message:", message);
 
-		// Convert markdown to HTML
-		// const htmlContent = marked.parse(message.message);
-
-		// Send to webview
-		if (this._provider && this._provider._view) {
-			console.log("WebSocket: Sending message to webview:", message);
-			this._provider._view.webview.postMessage({
-				command: "transcription",
-				text: message,
-			});
+			// Send to webview if it's a transcription message
+			if (this._provider && this._provider._view) {
+				console.log("WebSocket: Sending message to webview:", message);
+				this._provider._view.webview.postMessage({
+					command: "transcription",
+					text: message.data.text
+				});
+			}
+		} catch (error) {
+			console.error("WebSocket: Error processing message:", error);
 		}
 	}
 

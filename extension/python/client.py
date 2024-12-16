@@ -1,4 +1,4 @@
-import os
+
 import json
 import threading
 import asyncio
@@ -9,7 +9,6 @@ from typing import List, Dict, Optional, Tuple
 
 import logging
 import uuid
-import base64
 import numpy as np
 
 # Configure logging
@@ -22,15 +21,17 @@ class TranscriptionClient:
     Placeholder TranscriptionClient.
     Implement the actual logic based on your transcription server's API.
     """
-    def __init__(self, host: str, port: int, lang: str = "en", log_transcription: bool = True):
+    def __init__(self, host: str, port: int, lang: str = "en", log_transcription: bool = True, command_server=None):
         self.host = host
         self.port = port
         self.lang = lang
         self.log_transcription = log_transcription
+        self.command_server = command_server
         self.ws = None
         self.loop = asyncio.new_event_loop()
         self._connected = False
         self._should_reconnect = True
+        self.current_session_id = None
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
 
@@ -45,13 +46,18 @@ class TranscriptionClient:
                     uri = f"ws://{self.host}:{self.port}"
                     self.ws = await websockets.connect(uri)
                     
+                    # Generate new session ID
+                    self.current_session_id = str(uuid.uuid4())
+                    
                     # Send initial configuration
                     config = {
-                        "uid": str(uuid.uuid4()),
-                        "language": self.lang,
-                        "task": "transcribe",
+                        "uid": self.current_session_id,
+                        "language": None,  # Set to None for auto-detection
+                        "task": "transcribe",  # Use 'transcribe' instead of 'translate'
                         "model": "turbo",
                         "use_vad": True,
+                        "detect_language": True,  # Enable language detection
+                        "translate": False,  # Disable translation
                         "max_clients": 4,
                         "max_connection_time": 600
                     }
@@ -66,6 +72,16 @@ class TranscriptionClient:
                                 message = await self.ws.recv()
                                 if self.log_transcription:
                                     logger.info(f"Received from server: {message}")
+                                
+                                # Forward message to command server clients
+                                if self.command_server:
+                                    processed_message = self.process_transcription(message)
+                                    if processed_message:
+                                        await self.command_server.broadcast({
+                                            "type": "transcription",
+                                            "data": processed_message
+                                        })
+                                    
                             except websockets.exceptions.ConnectionClosed:
                                 logger.warning("Connection closed by server")
                                 break
@@ -73,10 +89,36 @@ class TranscriptionClient:
                         self._connected = False
                         
                 if not self._connected:
-                    await asyncio.sleep(5)  # Wait before reconnecting
+                    await asyncio.sleep(5)
             except Exception as e:
                 logger.error(f"Connection error: {e}")
-                await asyncio.sleep(5)  # Wait before retry
+                await asyncio.sleep(5)
+
+    def process_transcription(self, message):
+        try:
+            data = json.loads(message)
+            
+            # Handle server ready message
+            if "message" in data and data["message"] == "SERVER_READY":
+                return {
+                    "status": "ready",
+                    "sessionId": self.current_session_id
+                }
+            
+            # Handle transcription segments - combine all text into one string
+            if "segments" in data:
+                full_text = " ".join(segment["text"].strip() for segment in data["segments"])
+                return {
+                    "status": "transcribing",
+                    "sessionId": self.current_session_id,
+                    "text": full_text
+                }
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error processing transcription message: {e}")
+            return None
 
     def send_audio_data(self, data: bytes):
         if not self._connected or not self.ws:
@@ -139,97 +181,105 @@ class CommandServer:
         self.client = client
         self.host = host
         self.port = port
-        self.server = None
+        self.clients = set()
         self.loop = asyncio.new_event_loop()
-        self.thread = threading.Thread(target=self.start_server, daemon=True)
-
-    def start(self):
+        self.thread = threading.Thread(target=self._run_server, daemon=True)
         self.thread.start()
 
-    def start_server(self):
+    def _run_server(self):
+        """
+        Run the server in the thread's event loop
+        """
         asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self.start_server_async())
+        self.loop.run_forever()
+
+    async def broadcast(self, message):
+        """
+        Broadcasts a message to all connected clients
+        """
+        if self.clients:  # only try to broadcast if there are connected clients
+            message_str = json.dumps(message)
+            await asyncio.gather(
+                *[client.send(message_str) for client in self.clients],
+                return_exceptions=True
+            )
+
+    async def handler(self, websocket):
         try:
-            self.loop.run_until_complete(self.start_server_async())
-            self.loop.run_forever()
-        except Exception as e:
-            logger.error(f"CommandServer encountered an error: {e}")
+            self.clients.add(websocket)
+            logger.info(f"Client connected: {websocket.remote_address[0]}")
+            
+            async for message in websocket:
+                try:
+                    data = json.loads(message)
+                    command = data.get('command')
+                    args = data.get('args', {})
+
+                    logger.debug(f"Received command: {command} with args: {args}")
+
+                    if command == 'list_input_devices':
+                        devices = self.client.list_input_devices()
+                        await websocket.send(json.dumps({'status': 'success', 'devices': devices}))
+
+                    elif command == 'change_input_device':
+                        device_id = args.get('device_id')
+                        if device_id is None:
+                            await websocket.send(json.dumps({'status': 'error', 'message': 'device_id is required.'}))
+                        else:
+                            success, msg = self.client.change_input_device(device_id)
+                            if success:
+                                await websocket.send(json.dumps({'status': 'success', 'message': msg}))
+                            else:
+                                await websocket.send(json.dumps({'status': 'error', 'message': msg}))
+
+                    elif command == 'start_recording':
+                        success, msg = self.client.start_recording()
+                        if success:
+                            await websocket.send(json.dumps({'status': 'success', 'message': msg}))
+                        else:
+                            await websocket.send(json.dumps({'status': 'error', 'message': msg}))
+
+                    elif command == 'stop_recording':
+                        success, msg = self.client.stop_recording()
+                        if success:
+                            await websocket.send(json.dumps({'status': 'success', 'message': msg}))
+                        else:
+                            await websocket.send(json.dumps({'status': 'error', 'message': msg}))
+
+                    elif command == 'pause_recording':
+                        success, msg = self.client.pause_recording()
+                        if success:
+                            await websocket.send(json.dumps({'status': 'success', 'message': msg}))
+                        else:
+                            await websocket.send(json.dumps({'status': 'error', 'message': msg}))
+
+                    elif command == 'resume_recording':
+                        success, msg = self.client.resume_recording()
+                        if success:
+                            await websocket.send(json.dumps({'status': 'success', 'message': msg}))
+                        else:
+                            await websocket.send(json.dumps({'status': 'error', 'message': msg}))
+
+                    else:
+                        await websocket.send(json.dumps({'status': 'error', 'message': 'Unknown command'}))
+
+                except json.JSONDecodeError:
+                    await websocket.send(json.dumps({
+                        "status": "error",
+                        "message": "Invalid JSON format"
+                    }))
+        finally:
+            self.clients.remove(websocket)
 
     async def start_server_async(self):
         self.server = await websockets.serve(
-            self.handle_connection,
+            self.handler,
             self.host,
             self.port,
-            ping_interval=None  # Disable ping/pong to avoid some connection issues
+            ping_interval=None
         )
         logger.info(f"CommandServer started on ws://{self.host}:{self.port}")
-
-    async def handle_connection(self, websocket):
-        client_ip = websocket.remote_address[0]
-        logger.info(f"Client connected: {client_ip}")
-        try:
-            async for message in websocket:
-                response = await self.process_command(message)
-                await websocket.send(json.dumps(response))
-        except websockets.exceptions.ConnectionClosed:
-            logger.info(f"Client disconnected: {client_ip}")
-
-    async def process_command(self, message):
-        try:
-            data = json.loads(message)
-            command = data.get('command')
-            args = data.get('args', {})
-
-            logger.debug(f"Received command: {command} with args: {args}")
-
-            if command == 'list_input_devices':
-                devices = self.client.list_input_devices()
-                return {'status': 'success', 'devices': devices}
-
-            elif command == 'change_input_device':
-                device_id = args.get('device_id')
-                if device_id is None:
-                    return {'status': 'error', 'message': 'device_id is required.'}
-                success, msg = self.client.change_input_device(device_id)
-                if success:
-                    return {'status': 'success', 'message': msg}
-                else:
-                    return {'status': 'error', 'message': msg}
-
-            elif command == 'start_recording':
-                success, msg = self.client.start_recording()
-                if success:
-                    return {'status': 'success', 'message': msg}
-                else:
-                    return {'status': 'error', 'message': msg}
-
-            elif command == 'stop_recording':
-                success, msg = self.client.stop_recording()
-                if success:
-                    return {'status': 'success', 'message': msg}
-                else:
-                    return {'status': 'error', 'message': msg}
-
-            elif command == 'pause_recording':
-                success, msg = self.client.pause_recording()
-                if success:
-                    return {'status': 'success', 'message': msg}
-                else:
-                    return {'status': 'error', 'message': msg}
-
-            elif command == 'resume_recording':
-                success, msg = self.client.resume_recording()
-                if success:
-                    return {'status': 'success', 'message': msg}
-                else:
-                    return {'status': 'error', 'message': msg}
-
-            else:
-                return {'status': 'error', 'message': 'Unknown command'}
-
-        except json.JSONDecodeError:
-            return {'status': 'error', 'message': 'Invalid JSON format'}
-        except Exception as e:
-            return {'status': 'error', 'message': str(e)}
 
 
 class Client:
@@ -263,21 +313,21 @@ class Client:
         self.paused = False
         self.recording_thread = None
 
-        # Initialize TranscriptionClient if server details are provided
+        # Initialize CommandServer
+        self.command_server = CommandServer(self, host=command_host, port=command_port)
+
+        # Initialize TranscriptionClient with command_server reference
         if self.host and self.port:
             self.transcription_client = TranscriptionClient(
                 self.host, 
                 self.port,
                 lang=self.lang,
-                log_transcription=self.log_transcription
+                log_transcription=self.log_transcription,
+                command_server=self.command_server
             )
         else:
             self.transcription_client = None
             logger.warning("No transcription server details provided. TranscriptionClient not initialized.")
-
-        # Initialize Command Server
-        self.command_server = CommandServer(self, host=command_host, port=command_port)
-        self.command_server.start()
 
     def get_default_input_device(self) -> Optional[int]:
         try:
@@ -484,10 +534,10 @@ if __name__ == "__main__":
     parser.add_argument("--server-host", default="localhost", help="Transcription server host")
     parser.add_argument("--server-port", type=int, default=9090, help="Transcription server port")
     parser.add_argument("--command-host", default="localhost", help="Command WebSocket server host")
-    parser.add_argument("--command-port", type=int, default=8765, help="Command WebSocket server port")
-    parser.add_argument("--lang", type=str, default="en", help="Language for transcription")
+    parser.add_argument("--command-port", type=int, default=8766, help="Command WebSocket server port")
+    parser.add_argument("--lang", type=str, help="Language for transcription (optional, uses auto-detection if not specified)")
     parser.add_argument("--translate", action="store_true", help="Enable translation")
-    parser.add_argument("--model", type=str, default="small", help="Transcription model")
+    parser.add_argument("--model", type=str, default="turbo", help="Transcription model")
     parser.add_argument("--srt-file", type=str, default="output.srt", help="Path to save SRT file")
     parser.add_argument("--use-vad", action="store_true", help="Enable Voice Activity Detection")
     parser.add_argument("--log-transcription", action="store_true", help="Enable transcription logging")
