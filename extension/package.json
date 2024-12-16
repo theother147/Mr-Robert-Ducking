@@ -48,7 +48,7 @@
 			{
 				"key": "ctrl+shift+r+t",
 				"command": "rubberduck.transcribe",
-				"title": "Rubber Duck: Start Audio Recording"
+				"title": "Rubber Duck: Transcribe"
 			},
 			{
 				"key": "ctrl+shift+r+n",

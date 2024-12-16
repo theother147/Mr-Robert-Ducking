@@ -1,13 +1,8 @@
-const { WhisperliveWebSocketManager } = require("../websocketWhisperLive");
 
-let whisperLiveWS;
 let isRecording = false;
 
-const startRecording = async (provider) => {
+const startRecording = async (whisperLiveWS) => {
     try {
-        whisperLiveWS = new WhisperliveWebSocketManager();
-        whisperLiveWS.setProvider(provider);
-        whisperLiveWS.connect();
         whisperLiveWS.sendMessage({ command: "start_recording" });
         isRecording = true;
         
@@ -16,10 +11,9 @@ const startRecording = async (provider) => {
     }
 };
 
-const stopRecording = async (provider) => {
+const stopRecording = async (whisperLiveWS) => {
     try {
         whisperLiveWS.sendMessage({ command: "stop_recording" });
-        whisperLiveWS.closeConnection();
         isRecording = false;
     }
     catch (error) {

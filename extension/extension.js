@@ -74,9 +74,9 @@ function activate(context) {
       () => {
         if (checkWebviewVisible()) {
           if (!getRecordingStatus()) {
-            startRecording(provider);
+            startRecording(wslManager);
           } else {
-            stopRecording(provider);
+            stopRecording(wslManager);
           }
         }
       }
