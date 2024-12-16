@@ -83,9 +83,7 @@ function activate(context) {
     let stopRecordingCommand = vscode.commands.registerCommand(
       "rubberduck.stopRecording",
       () => {
-        if (checkWebviewVisible()) {
           stopRecording(provider);
-        }
       }
     );
     context.subscriptions.push(stopRecordingCommand);

@@ -135,8 +135,8 @@ body {
 }
 
 /* Failed messages */
-.message-failed {
-    background-color: var(--vscode-inputValidation-errorBackground);
+.failed-message-text {
+    color: var(--vscode-errorForeground);
 }
 
 .retry-button {
@@ -152,10 +152,6 @@ body {
 .retry-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.failed-message-text {
-    color: var(--vscode-errorForeground);
 }
 
 /* Context indicator */

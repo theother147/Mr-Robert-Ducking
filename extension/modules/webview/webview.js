@@ -13,6 +13,13 @@ class ViewProvider {
   resolveWebviewView(webviewView) {
     this._view = webviewView;
 
+    // Stop recording when the webview is hidden
+    webviewView.onDidChangeVisibility(() => {
+      if (!webviewView.visible) {
+        vscode.commands.executeCommand('rubberduck.stopRecording');
+      }
+    });
+
     // Set webview options
     webviewView.webview.options = {
       enableScripts: true,
