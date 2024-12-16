@@ -69,7 +69,7 @@ function activate(context) {
     context.subscriptions.push(sendMessageCommand);
 
     // Register command to start recording
-    let startRecordingCommand = vscode.commands.registerCommand(
+    let transcribeCommand = vscode.commands.registerCommand(
       "rubberduck.transcribe",
       () => {
         if (checkWebviewVisible()) {
@@ -81,7 +81,7 @@ function activate(context) {
         }
       }
     );
-    context.subscriptions.push(startRecordingCommand);
+    context.subscriptions.push(transcribeCommand);
 
     // Register command to select and read file
     let selectFileCommand = vscode.commands.registerCommand(

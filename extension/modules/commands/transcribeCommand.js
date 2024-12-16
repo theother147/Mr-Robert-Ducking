@@ -8,7 +8,7 @@ const startRecording = async (provider) => {
         whisperLiveWS = new WhisperliveWebSocketManager();
         whisperLiveWS.setProvider(provider);
         whisperLiveWS.connect();
-        whisperLiveWS.sendMessage({ command: "startRecording" });
+        whisperLiveWS.sendMessage({ command: "start_recording" });
         isRecording = true;
         
     } catch (error) {
@@ -18,7 +18,7 @@ const startRecording = async (provider) => {
 
 const stopRecording = async (provider) => {
     try {
-        whisperLiveWS.sendMessage({ command: "stopRecording" });
+        whisperLiveWS.sendMessage({ command: "stop_recording" });
         whisperLiveWS.closeConnection();
         isRecording = false;
     }
