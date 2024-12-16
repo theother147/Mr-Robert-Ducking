@@ -218,8 +218,8 @@ window.addEventListener('DOMContentLoaded', () => {
 				updateChat(aiName, message.text);
 				break;
 
-			case "recording":
-				messageInput.value += message.text;
+			case "transcription":
+				messageInput.value = message.text;
 				vscode.setState({ messageInputState: messageInput.value });
 				adjustInputHeight();
 				break;
