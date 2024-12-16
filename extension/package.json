@@ -1,79 +1,92 @@
 {
-  "name": "rubberduck-ai-assistant",
-  "displayName": "Rubber Duck AI Assistant",
-  "description": "AI-powered debugging assistant for VS Code",
-  "publisher": "Softwaretechnik-Labor",
-  "version": "0.0.1",
-  "icon": "resources/icon_extension.png",
-  "engines": {
-    "vscode": "^1.94.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "main": "./extension.js",
-  "files": [
-    "webview/**/*"
-  ],
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "rubberduck",
-          "title": "Rubber Duck AI Assistant",
-          "icon": "resources/icon_webview.svg"
-        }
-      ]
-    },
-    "views": {
-      "rubberduck": [
-        {
-          "type": "webview",
-          "id": "rubberduck.view",
-          "name": "Rubber Duck AI Assistant"
-        }
-      ]
-    },
-    "commands": [
-      {
-        "command": "rubberduck.sendMessage",
-        "title": "Rubber Duck: Send Message"
-      },
-      {
-        "command": "rubberduck.selectFile",
-        "title": "Rubber Duck: Attach Context"
-      },
-      {
-        "command": "rubberduck.startRecording",
-        "title": "Rubber Duck: Start Audio Recording"
-      },
-      {
-        "command": "rubberduck.stopRecording",
-        "title": "Rubber Duck: Stop Audio Recording"
-      },
-      {
-        "command": "rubberduck.newChat",
-        "title": "Rubber Duck: New Chat"
-      }
-    ],
-    "configuration": {
-      "title": "Rubber Duck",
-      "properties": {
-        "rubberduck.webSocketUrl": {
-          "type": "string",
-          "default": "ws://localhost:8765",
-          "description": "WebSocket server URL"
-        }
-      }
-    }
-  },
-  "dependencies": {
-    "@vscode/codicons": "^0.0.36",
-    "child_process": "^1.0.2",
-    "marked": "^15.0.3",
-    "ws": "^8.18.0"
-  }
+	"name": "rubberduck-ai-assistant",
+	"displayName": "Rubber Duck AI Assistant",
+	"description": "AI-powered debugging assistant for VS Code",
+	"publisher": "Softwaretechnik-Labor",
+	"version": "0.0.1",
+	"icon": "resources/icon_extension.png",
+	"engines": {
+		"vscode": "^1.94.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "rubberduck",
+					"title": "Rubber Duck AI Assistant",
+					"icon": "resources/icon_webview.svg"
+				}
+			]
+		},
+		"views": {
+			"rubberduck": [
+				{
+					"type": "webview",
+					"id": "rubberduck.view",
+					"name": "Rubber Duck AI Assistant"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "rubberduck.sendMessage",
+				"title": "Rubber Duck: Send Message"
+			},
+			{
+				"command": "rubberduck.selectFile",
+				"title": "Rubber Duck: Attach Context"
+			},
+			{
+				"command": "rubberduck.startRecording",
+				"title": "Rubber Duck: Start Audio Recording"
+			},
+			{
+				"command": "rubberduck.stopRecording",
+				"title": "Rubber Duck: Stop Audio Recording"
+			},
+			{
+				"command": "rubberduck.newChat",
+				"title": "Rubber Duck: New Chat"
+			}
+		],
+		"configuration": {
+			"title": "Rubber Duck",
+			"properties": {
+				"rubberduck.webSocketUrl": {
+					"type": "string",
+					"default": "ws://localhost:8765",
+					"description": "WebSocket server URL"
+				}
+			}
+		}
+	},
+	"dependencies": {
+		"@vscode/codicons": "^0.0.36",
+		"bufferutil": "^4.0.8",
+		"child_process": "^1.0.2",
+		"marked": "^15.0.4",
+		"npm-run-all": "4.1.5",
+		"ws": "^8.18.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/theother147/Mr-Robert-Ducking.git"
+	},
+	"devDependencies": {
+		"esbuild": "^0.24.0"
+	},
+	"scripts": {
+		"compile": "node esbuild.js",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"vscode:prepublish": "npm run package",
+		"package": "node esbuild.js --production"
+	}
 }

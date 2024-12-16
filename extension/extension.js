@@ -137,8 +137,12 @@ function activate(context) {
 }
 
 function deactivate() {
-  wsManager.closeConnection();
-  transcriptionServer.kill("SIGKILL");
+	if (wsManager) {
+		wsManager.close_connection();
+	}
+	if (transcriptionServer) {
+		transcriptionServer.kill("SIGKILL");
+	}
 }
 
 module.exports = {

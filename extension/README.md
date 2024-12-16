@@ -1,65 +1,54 @@
-# rubberduck README
+# Rubber Duck AI Assistant
 
-This is the README for your extension "rubberduck". After writing up a brief description, we recommend including the following sections.
+Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI-powered coding assistant directly into your editor. It allows you to interact with an AI to get help with coding tasks, ask questions about your code, and enhance your productivity.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **AI-Powered Chat**: Engage in conversations with the AI assistant within VS Code.
+- **Code Context Attachment**: Attach code files or snippets to provide context to the AI.
+- **Voice Input Support**: Use voice commands to interact with the assistant.
+- **Interactive Chat History**: Keep track of your conversations with the AI.
+- **Syntax Highlighting**: Enjoy improved readability with syntax-highlighted code in responses.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+-
 
-## Extension Settings
+## Installation
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+1. **Clone the Repository**
 
-For example:
+    Clone the repository to your local machine:
 
-This extension contributes the following settings:
+2. **Pack Extension**
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+3. **Install Extension**
+
+-
+
+## Running the Extension
+
+-
+
+1. **Use the Rubber Duck AI Assistant**
+
+    - **Open the Assistant Panel**: Click on the Rubber Duck icon in the Activity Bar to open the assistant.
+    - **Interact with the AI**: Use the chat interface to send messages to the AI assistant.
+
+## Usage
+
+- **Sending Messages**: Type your message in the input box and press the send button or hit Enter.
+- **Attaching Code Context**: Click the attach button to add code files or selected text from the editor to provide context.
+- **Voice Commands**: Use the microphone button to start and stop voice input for sending messages.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+-
 
-## Release Notes
+## Contributing
 
-Users appreciate release notes as you update your extension.
+Contributions are welcome. Please open issues for any bugs or feature requests and submit pull requests for improvements.
 
-### 1.0.0
+## License
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+This project is licensed under the MIT License.
