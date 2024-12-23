@@ -2,28 +2,25 @@
 const vscode = require("vscode");
 const WebSocket = require("ws");
 const marked = require('marked');
+const getRecordingStatus = require("./commands/transcribeCommand");
 
 class WhisperliveWebSocketManager {
 	constructor() {
 		this._ws = null;
 		this._wsUrl = vscode.workspace
 			.getConfiguration("rubberduck")
-			.get("wslUrl", "ws://localhost:8766"); // Get WebSocket URL from the configuration (package.json)
-		this._isConnecting = false; // Flag to indicate if WebSocket is connecting
-		this._reconnectDelay = 5000; // Reconnect delay in milliseconds
-		this._resendDelay = 1000; // Resend delay in milliseconds
-		this._pendingMessage = null; // Pending message to be sent
-		this._resendAttempt = 0; // Number of resend attempts
-		this._maxResendAttempts = 2; // Maximum number of resend attempts
-		this._provider = null; // Reference to webview provider
+			.get("wslUrl", "ws://localhost:8766");
+		this._isConnecting = false;
+		this._reconnectDelay = 5000;
+		this._provider = null;
+		this._currentSessionId = null;  // Track current recording session
+		console.log("WhisperLive WebSocket: Initialized");
 	}
 
-	// Share webview provider with WebSocket module
 	setProvider(provider) {
 		this._provider = provider;
 	}
 
-	// Connect to WebSocket server
 	connect() {
 		if (
 			this._isConnecting ||
@@ -37,7 +34,6 @@ class WhisperliveWebSocketManager {
 		this.eventHandlers(); // Setup WebSocket event handlers
 	}
 
-	// Reconnect to WebSocket server
 	reconnect() {
 		setTimeout(() => {
 			console.log("WebSocket: Reconnecting...");
@@ -46,28 +42,36 @@ class WhisperliveWebSocketManager {
 		}, this._reconnectDelay); // Reconnect after a delay
 	}
 
-	// Handle WebSocket connection
 	handleConnection() {
 		console.log("WebSocket: Connected");
 		this._isConnecting = false; // Reset connecting flag
 	}
 
-	// Handle WebSocket disconnection
 	handleDisconnection() {
 		console.log("WebSocket: Disconnected");
 		this._isConnecting = false; // Reset connecting flag
 		this.reconnect(); // Reconnect to WebSocket server
 	}
 
-	// Handle WebSocket connection error
 	handleError(error) {
 		console.error("WebSocket error:", error);
 	}
 
 	sendMessage(message) {
-		// Store message on first attempt
 		if (this._ws.readyState === WebSocket.OPEN) {
 			try {
+				// If starting a new recording, clear previous session
+				if (message.command === "start_recording") {
+					this._currentSessionId = null;
+					// Clear the text in the webview
+					if (this._provider && this._provider._view) {
+						this._provider._view.webview.postMessage({
+							command: "transcription",
+							text: ""
+						});
+					}
+				}
+				
 				this._ws.send(JSON.stringify(message));
 				console.log("WebSocket: Message sent:", message);
 			} catch (error) {
@@ -78,29 +82,36 @@ class WhisperliveWebSocketManager {
 		}
 	}
 
-	// Handle incoming messages from the WebSocket server
 	handleMessage(data) {
 		console.log("WebSocket: Received raw data");
 		try {
-			// Convert buffer to string and parse JSON
 			const messageString = data.toString();
 			const message = JSON.parse(messageString);
 			console.log("WebSocket: Parsed message:", message);
 
-			// Send to webview if it's a transcription message
-			if (this._provider && this._provider._view) {
-				console.log("WebSocket: Sending message to webview:", message);
-				this._provider._view.webview.postMessage({
-					command: "transcription",
-					text: message.data.text
-				});
+			// Handle transcription messages
+			if (this._provider && this._provider._view && message.type === 'transcription') {
+				// Store session ID from first message of new session
+				if (message.data.status === "ready") {
+					this._currentSessionId = message.data.sessionId;
+					console.log("WebSocket: New session started:", this._currentSessionId);
+					return;
+				}
+
+				// Only process messages from current session
+				if (message.data.sessionId === this._currentSessionId && message.data.text !== undefined) {
+					console.log("WebSocket: Sending message to webview:", message.data.text);
+					this._provider._view.webview.postMessage({
+						command: "transcription",
+						text: message.data.text
+					});
+				}
 			}
 		} catch (error) {
 			console.error("WebSocket: Error processing message:", error);
 		}
 	}
 
-	// Setup WebSocket event handlers
 	eventHandlers() {
 		this._ws.on("open", async () => {
 			this.handleConnection(); // Handle WebSocket connection
@@ -119,7 +130,6 @@ class WhisperliveWebSocketManager {
 		});
 	}
 
-	// Close WebSocket connection
 	closeConnection() {
 		if (this._ws) {
 			this._ws.close();

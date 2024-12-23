@@ -1,4 +1,3 @@
-
 import json
 import threading
 import asyncio
@@ -17,10 +16,6 @@ logger = logging.getLogger(__name__)
 
 # Placeholder for TranscriptionClient
 class TranscriptionClient:
-    """
-    Placeholder TranscriptionClient.
-    Implement the actual logic based on your transcription server's API.
-    """
     def __init__(self, host: str, port: int, lang: str = "en", log_transcription: bool = True, command_server=None):
         self.host = host
         self.port = port
@@ -32,6 +27,8 @@ class TranscriptionClient:
         self._connected = False
         self._should_reconnect = True
         self.current_session_id = None
+        self.is_recording = False  # Track recording state
+        self.current_transcription = None  # Store current session's transcription
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
 
@@ -45,24 +42,6 @@ class TranscriptionClient:
                 if not self._connected:
                     uri = f"ws://{self.host}:{self.port}"
                     self.ws = await websockets.connect(uri)
-                    
-                    # Generate new session ID
-                    self.current_session_id = str(uuid.uuid4())
-                    
-                    # Send initial configuration
-                    config = {
-                        "uid": self.current_session_id,
-                        "language": None,  # Set to None for auto-detection
-                        "task": "transcribe",  # Use 'transcribe' instead of 'translate'
-                        "model": "turbo",
-                        "use_vad": True,
-                        "detect_language": True,  # Enable language detection
-                        "translate": False,  # Disable translation
-                        "max_clients": 4,
-                        "max_connection_time": 600
-                    }
-                    await self.ws.send(json.dumps(config))
-                    
                     self._connected = True
                     logger.info(f"Connected to transcription server at {uri}")
 
@@ -73,26 +52,38 @@ class TranscriptionClient:
                                 if self.log_transcription:
                                     logger.info(f"Received from server: {message}")
                                 
-                                # Forward message to command server clients
-                                if self.command_server:
-                                    processed_message = self.process_transcription(message)
-                                    if processed_message:
-                                        await self.command_server.broadcast({
-                                            "type": "transcription",
-                                            "data": processed_message
-                                        })
+                                # Process all messages, but only forward if recording
+                                processed_message = self.process_transcription(message)
+                                if processed_message and self.is_recording and self.command_server:
+                                    await self.command_server.broadcast({
+                                        "type": "transcription",
+                                        "data": processed_message
+                                    })
                                     
                             except websockets.exceptions.ConnectionClosed:
                                 logger.warning("Connection closed by server")
                                 break
                     finally:
                         self._connected = False
-                        
-                if not self._connected:
-                    await asyncio.sleep(5)
             except Exception as e:
                 logger.error(f"Connection error: {e}")
                 await asyncio.sleep(5)
+
+    def clear_transcription(self):
+        """Clear the current transcription when stopping recording"""
+        self.current_transcription = None
+        if self.command_server:
+            asyncio.run_coroutine_threadsafe(
+                self.command_server.broadcast({
+                    "type": "transcription",
+                    "data": {
+                        "status": "transcribing",
+                        "sessionId": self.current_session_id,
+                        "text": ""  # Send empty text to clear frontend
+                    }
+                }),
+                self.loop
+            )
 
     def process_transcription(self, message):
         try:
@@ -105,14 +96,17 @@ class TranscriptionClient:
                     "sessionId": self.current_session_id
                 }
             
-            # Handle transcription segments - combine all text into one string
+            # Handle transcription segments
             if "segments" in data:
-                full_text = " ".join(segment["text"].strip() for segment in data["segments"])
-                return {
-                    "status": "transcribing",
-                    "sessionId": self.current_session_id,
-                    "text": full_text
-                }
+                # Only process messages from current session
+                if data["uid"] == self.current_session_id:
+                    full_text = " ".join(segment["text"].strip() for segment in data["segments"])
+                    self.current_transcription = full_text
+                    return {
+                        "status": "transcribing",
+                        "sessionId": self.current_session_id,
+                        "text": full_text
+                    }
             
             return None
             
@@ -148,12 +142,15 @@ class TranscriptionClient:
         try:
             self._should_reconnect = False
             if self.ws and self._connected:
+                # Clear transcription before closing
+                self.clear_transcription()
+                
                 # Send END_OF_AUDIO and wait for it to complete
                 future = asyncio.run_coroutine_threadsafe(
                     self.ws.send(b"END_OF_AUDIO"),
                     self.loop
                 )
-                future.result(timeout=1.0)  # Wait up to 1 second for the message to send
+                future.result(timeout=1.0)
                 
                 # Close the websocket connection
                 future = asyncio.run_coroutine_threadsafe(
@@ -170,6 +167,76 @@ class TranscriptionClient:
             logger.info("Transcription client connection closed.")
         except Exception as e:
             logger.error(f"Error during transcription client shutdown: {e}")
+
+    def start_new_session(self):
+        """Start a new recording session"""
+        self.current_session_id = str(uuid.uuid4())
+        self.is_recording = True
+        
+        # Send new configuration for the new session
+        config = {
+            "uid": self.current_session_id,
+            "language": None,
+            "task": "transcribe",
+            "model": "turbo",
+            "use_vad": True,
+            "detect_language": True,
+            "translate": False,
+            "max_clients": 4,
+            "max_connection_time": 600
+        }
+        
+        if self._connected and self.ws:
+            try:
+                # Send END_OF_AUDIO first to ensure clean state
+                future = asyncio.run_coroutine_threadsafe(
+                    self.ws.send(b"END_OF_AUDIO"),
+                    self.loop
+                )
+                future.result(timeout=1.0)
+                
+                # Small delay to ensure server processes END_OF_AUDIO
+                time.sleep(0.1)
+                
+                # Now send new configuration
+                future = asyncio.run_coroutine_threadsafe(
+                    self.ws.send(json.dumps(config)),
+                    self.loop
+                )
+                future.result(timeout=1.0)
+                logger.info(f"Started new recording session: {self.current_session_id}")
+            except Exception as e:
+                logger.error(f"Error starting new session: {e}")
+
+    def end_session(self):
+        """End the current recording session"""
+        if self._connected and self.ws:
+            try:
+                # Send END_OF_AUDIO to finish current session
+                future = asyncio.run_coroutine_threadsafe(
+                    self.ws.send(b"END_OF_AUDIO"),
+                    self.loop
+                )
+                future.result(timeout=1.0)
+            except Exception as e:
+                logger.error(f"Error ending session: {e}")
+
+        self.is_recording = False
+        self.current_session_id = None
+        
+        # Send empty text to clear the frontend
+        if self.command_server:
+            asyncio.run_coroutine_threadsafe(
+                self.command_server.broadcast({
+                    "type": "transcription",
+                    "data": {
+                        "status": "transcribing",
+                        "text": ""
+                    }
+                }),
+                self.loop
+            )
+        logger.info("Ended recording session")
 
 
 class CommandServer:
@@ -397,6 +464,11 @@ class Client:
             return False, "Recording is already in progress."
         if self.current_device_id is None:
             return False, "No valid input device selected."
+        
+        # Start new transcription session
+        if self.transcription_client:
+            self.transcription_client.start_new_session()
+        
         self.recording = True
         self.paused = False
         self.recording_thread = threading.Thread(target=self.record_audio, daemon=True)
@@ -405,23 +477,23 @@ class Client:
         return True, "Recording started."
 
     def stop_recording(self) -> Tuple[bool, str]:
-        """
-        Stops the current recording.
-        """
         if not self.recording:
             return False, "Recording is not in progress."
         
         try:
-            # Set recording flag to False
             self.recording = False
             
             # Wait for recording thread to finish
             if self.recording_thread is not None:
-                self.recording_thread.join(timeout=2.0)  # Add timeout to prevent hanging
+                self.recording_thread.join(timeout=2.0)
                 if self.recording_thread.is_alive():
                     logger.warning("Recording thread did not stop properly")
                 self.recording_thread = None
-                
+            
+            # End transcription session
+            if self.transcription_client:
+                self.transcription_client.end_session()
+            
             logger.info("Recording stopped.")
             return True, "Recording stopped."
         except Exception as e:
