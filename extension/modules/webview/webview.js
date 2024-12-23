@@ -1,32 +1,16 @@
-/**
- * Webview provider module for managing the extension's UI.
- * Handles the creation and management of the VS Code webview panel,
- * including message passing between the extension and webview.
- */
-
+// Description: Webview provider for the extension
 const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
 const { stopRecording, getRecordingStatus } = require("../commands/transcribeCommand");
 
-/**
- * ViewProvider class manages the webview interface and communication
- * between the extension and the webview content.
- */
 class ViewProvider {
-  /**
-   * Creates a new ViewProvider instance
-   * @param {vscode.ExtensionContext} context - The VS Code extension context
-   */
   constructor(context) {
     this.context = context;
     this._view = null;
   }
 
-  /**
-   * Creates and configures the webview panel
-   * @param {vscode.WebviewView} webviewView - The webview view to configure
-   */
+  // Create the webview view
   resolveWebviewView(webviewView) {
     this._view = webviewView;
 
@@ -37,14 +21,7 @@ class ViewProvider {
       }
     });
 
-    // Stop recording when the webview is hidden
-    webviewView.onDidChangeVisibility(() => {
-      if (!webviewView.visible) {
-        vscode.commands.executeCommand('rubberduck.transcribe', { force_stop: true });
-      }
-    });
-
-    // Configure webview security and resource access
+    // Set webview options
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
@@ -62,10 +39,10 @@ class ViewProvider {
       ],
     };
 
-    // Set up the webview content
+    // Load webview HTML content
     webviewView.webview.html = this.getHtmlForWebview();
 
-    // Set up message handling from webview
+    // Handle messages from the webview
     webviewView.webview.onDidReceiveMessage(
       (message) => {
         switch (message.command) {
@@ -91,12 +68,8 @@ class ViewProvider {
     );
   }
 
-  /**
-   * Generates the HTML content for the webview
-   * @returns {string} The complete HTML content for the webview
-   */
+  // HTML content for the webview
   getHtmlForWebview() {
-    // Load the base HTML template
     const webviewPath = path.join(
       this.context.extensionPath,
       "modules",
@@ -105,7 +78,7 @@ class ViewProvider {
     );
     let html = fs.readFileSync(webviewPath, "utf8");
 
-    // Get URIs for webview resources
+    // Get URIs for scripts and styles
     const stylesUri = this._view.webview.asWebviewUri(
       vscode.Uri.file(
         path.join(
@@ -138,18 +111,14 @@ class ViewProvider {
       )
     );
 
-    // Replace resource placeholders with actual URIs
+    // Replace placeholderss
     html = html.replace("${scriptsUri}", scriptsUri.toString());
     html = html.replace("${stylesUri}", stylesUri.toString());
     html = html.replace("${codiconsUri}", codiconsUri.toString());
 
     return html;
   }
-
-  /**
-   * Checks if the webview panel is currently visible
-   * @returns {boolean} Whether the webview is visible
-   */
+  // Check if the webview is visible
   isWebviewVisible() {
     return this._view !== null && this._view.visible;
   }
