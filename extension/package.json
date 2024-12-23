@@ -63,7 +63,7 @@
 					"type": "string",
 					"default": "ws://localhost:8765",
 					"description": "WebSocket server URL"
-				}, 
+				},
 				"rubberduck.wslUrl": {
 					"type": "string",
 					"default": "ws://localhost:8766",

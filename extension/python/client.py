@@ -1,3 +1,9 @@
+"""
+Main client module for the WhisperLive transcription service.
+This module provides real-time audio transcription capabilities using WebSocket connections.
+It handles both the transcription service connection and command server functionality.
+"""
+
 import json
 import threading
 import asyncio
@@ -10,25 +16,36 @@ import logging
 import uuid
 import numpy as np
 
-# Configure logging
+# Configure logging for debugging and monitoring
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Placeholder for TranscriptionClient
 class TranscriptionClient:
+    """
+    Handles the connection to the WhisperLive transcription server.
+    Manages audio streaming and transcription processing.
+    """
     def __init__(self, host: str, port: int, lang: str = "en", log_transcription: bool = True, command_server=None):
+        # Connection parameters
         self.host = host
         self.port = port
         self.lang = lang
         self.log_transcription = log_transcription
         self.command_server = command_server
+        
+        # WebSocket and connection state
         self.ws = None
         self.loop = asyncio.new_event_loop()
         self._connected = False
         self._should_reconnect = True
+        
+        # Session management
         self.current_session_id = None
-        self.is_recording = False  # Track recording state
-        self.current_transcription = None  # Store current session's transcription
+        self.is_recording = False
+        self.current_transcription = None
+        
+        # Start connection thread
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
 
@@ -241,14 +258,14 @@ class TranscriptionClient:
 
 class CommandServer:
     """
-    A WebSocket server to receive commands for controlling the Client.
+    WebSocket server that handles control commands for the transcription client.
+    Provides an interface for starting/stopping recording and managing input devices.
     """
-
     def __init__(self, client, host='localhost', port=8765):
         self.client = client
         self.host = host
         self.port = port
-        self.clients = set()
+        self.clients = set()  # Set of connected WebSocket clients
         self.loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_server, daemon=True)
         self.thread.start()
@@ -350,6 +367,10 @@ class CommandServer:
 
 
 class Client:
+    """
+    Main client class that integrates audio recording, transcription, and command handling.
+    Manages the lifecycle of recording sessions and device management.
+    """
     def __init__(
         self,
         host: str,
@@ -363,6 +384,7 @@ class Client:
         command_host: str = "localhost",
         command_port: int = 8765,
     ):
+        # Initialize connection parameters
         self.host = host
         self.port = port
         self.lang = lang
@@ -372,18 +394,18 @@ class Client:
         self.use_vad = use_vad
         self.log_transcription = log_transcription
 
+        # Initialize audio system
         self.pyaudio_instance = pyaudio.PyAudio()
         self.current_device_id = self.get_default_input_device()
         logger.info(f"Default input device: {self.get_device_name(self.current_device_id)} (ID: {self.current_device_id})")
 
+        # Recording state
         self.recording = False
         self.paused = False
         self.recording_thread = None
 
-        # Initialize CommandServer
+        # Initialize servers
         self.command_server = CommandServer(self, host=command_host, port=command_port)
-
-        # Initialize TranscriptionClient with command_server reference
         if self.host and self.port:
             self.transcription_client = TranscriptionClient(
                 self.host, 
