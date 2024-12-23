@@ -55,7 +55,9 @@ All actions can be accessed via customizable keyboard shortcuts in VS Code's Key
 
 ## Known Issues
 
--
+- **WebSocket Status Indicator**: The WebSocket connection status indicator may not update correctly until the chat is cleared. As a workaround, press the "New Chat" button to see the current connection status.
+
+- **Audio Transcription Delay**: First-time use of audio transcription may experience longer waiting times while the model is being loaded. Subsequent uses will be faster.
 
 ## Contributing
 

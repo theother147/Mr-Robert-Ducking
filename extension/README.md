@@ -19,26 +19,6 @@ Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI
   - Docker and Docker Compose
   - Python 3.x (for local development only)
 
-## Installation
-
-1. **Install the Extension**
-
-    Install the extension using the provided .vsix file:
-    1. Open VS Code
-    2. Go to Extensions view (Ctrl+Shift+X)
-    3. Click "..." (More Actions) at the top of the Extensions view
-    4. Select "Install from VSIX..."
-    5. Choose the provided .vsix file
-
-2. **Configure Connection (Optional)**
-
-    The extension connects to a hosted backend server by default. If you need to use a different server:
-    1. Open VS Code Settings (Ctrl+,)
-    2. Search for "Rubber Duck"
-    3. Update the following settings if needed:
-       - `rubberduck.webSocketUrl`: WebSocket server URL
-       - `rubberduck.wslUrl`: WhisperLive WebSocket server URL
-
 ## Running the Extension
 
 1. **Open the Assistant**
@@ -53,9 +33,20 @@ Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI
 
 All actions can be accessed via customizable keyboard shortcuts in VS Code's Keyboard Shortcuts settings (File > Preferences > Keyboard Shortcuts).
 
+## Configuration Connection (optional)
+
+    The extension connects to a hosted backend server by default. If you need to use a different server:
+    1. Open VS Code Settings (Ctrl+,)
+    2. Search for "Rubber Duck"
+    3. Update the following settings if needed:
+       - `rubberduck.webSocketUrl`: WebSocket server URL
+       - `rubberduck.wslUrl`: WhisperLive WebSocket server URL
+
 ## Known Issues
 
--
+- **WebSocket Status Indicator**: The WebSocket connection status indicator may not update correctly until the chat is cleared. As a workaround, press the "New Chat" button to see the current connection status.
+
+- **Audio Transcription Delay**: First-time use of audio transcription may experience longer waiting times while the model is being loaded. Subsequent uses will be faster.
 
 ## Contributing
 
