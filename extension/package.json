@@ -36,24 +36,42 @@
 		},
 		"commands": [
 			{
-				"key": "ctrl+shift+r+s",
 				"command": "rubberduck.sendMessage",
 				"title": "Rubber Duck: Send Message"
 			},
 			{
-				"key": "ctrl+shift+r+f",
 				"command": "rubberduck.selectFile",
 				"title": "Rubber Duck: Attach Context"
 			},
 			{
-				"key": "ctrl+shift+r+a",
 				"command": "rubberduck.transcribe",
 				"title": "Rubber Duck: Start/Stop Voice Recording"
 			},
 			{
-				"key": "ctrl+shift+r+n",
 				"command": "rubberduck.newChat",
 				"title": "Rubber Duck: New Chat"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "rubberduck.sendMessage",
+				"key": "ctrl+shift+r s",
+				"mac": "cmd+shift+r s"
+			},
+			{
+				"command": "rubberduck.selectFile",
+				"key": "ctrl+shift+r f",
+				"mac": "cmd+shift+r f"
+			},
+			{
+				"command": "rubberduck.transcribe",
+				"key": "ctrl+shift+r a",
+				"mac": "cmd+shift+r a"
+			},
+			{
+				"command": "rubberduck.newChat",
+				"key": "ctrl+shift+r n",
+				"mac": "cmd+shift+r n"
 			}
 		],
 		"configuration": {

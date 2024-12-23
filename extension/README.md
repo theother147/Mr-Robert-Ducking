@@ -12,34 +12,46 @@ Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI
 
 ## Requirements
 
--
+- Visual Studio Code ^1.94.0
+- For extension usage:
+  - No additional requirements - everything is handled by the backend server
+- For backend development:
+  - Docker and Docker Compose
+  - Python 3.x (for local development only)
 
 ## Installation
 
-1. **Clone the Repository**
+1. **Install the Extension**
 
-    Clone the repository to your local machine:
+    Install the extension using the provided .vsix file:
+    1. Open VS Code
+    2. Go to Extensions view (Ctrl+Shift+X)
+    3. Click "..." (More Actions) at the top of the Extensions view
+    4. Select "Install from VSIX..."
+    5. Choose the provided .vsix file
 
-2. **Pack Extension**
+2. **Configure Connection (Optional)**
 
-3. **Install Extension**
-
--
+    The extension connects to a hosted backend server by default. If you need to use a different server:
+    1. Open VS Code Settings (Ctrl+,)
+    2. Search for "Rubber Duck"
+    3. Update the following settings if needed:
+       - `rubberduck.webSocketUrl`: WebSocket server URL
+       - `rubberduck.wslUrl`: WhisperLive WebSocket server URL
 
 ## Running the Extension
 
--
-
-1. **Use the Rubber Duck AI Assistant**
-
-    - **Open the Assistant Panel**: Click on the Rubber Duck icon in the Activity Bar to open the assistant.
-    - **Interact with the AI**: Use the chat interface to send messages to the AI assistant.
+1. **Open the Assistant**
+    - Click the Rubber Duck icon in the Activity Bar (left sidebar)
+    - The extension will automatically connect to the backend server
 
 ## Usage
 
 - **Sending Messages**: Type your message in the input box and press the send button or hit Enter.
 - **Attaching Code Context**: Click the attach button to add code files or selected text from the editor to provide context.
 - **Voice Commands**: Use the microphone button to start and stop voice input for sending messages.
+
+All actions can be accessed via customizable keyboard shortcuts in VS Code's Keyboard Shortcuts settings (File > Preferences > Keyboard Shortcuts).
 
 ## Known Issues
 
