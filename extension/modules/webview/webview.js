@@ -7,6 +7,7 @@
 const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
+const { stopRecording, getRecordingStatus } = require("../commands/transcribeCommand");
 
 /**
  * ViewProvider class manages the webview interface and communication
@@ -28,6 +29,20 @@ class ViewProvider {
    */
   resolveWebviewView(webviewView) {
     this._view = webviewView;
+
+    // Stop recording when the webview is hidden
+    webviewView.onDidChangeVisibility(() => {
+      if (!webviewView.visible) {
+        vscode.commands.executeCommand('rubberduck.transcribe', { force_stop: true });
+      }
+    });
+
+    // Stop recording when the webview is hidden
+    webviewView.onDidChangeVisibility(() => {
+      if (!webviewView.visible) {
+        vscode.commands.executeCommand('rubberduck.transcribe', { force_stop: true });
+      }
+    });
 
     // Configure webview security and resource access
     webviewView.webview.options = {

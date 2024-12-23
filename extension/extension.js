@@ -89,12 +89,16 @@ function activate(context) {
     // Register command for controlling audio transcription
     let transcribeCommand = vscode.commands.registerCommand(
       "rubberduck.transcribe",
-      () => {
-          if (!getRecordingStatus()) {
-            startRecording(provider, wslManager);
+      (options = {}) => {
+        if (options.force_stop) {
+          stopRecording(provider, wslManager); // Stop recording if forced
+        } else {
+          if (checkWebviewVisible() && !getRecordingStatus()) {
+              startRecording(provider, wslManager); // Start recording if not already recording
           } else {
-            stopRecording(provider, wslManager);
+            stopRecording(provider, wslManager); // Stop recording if already recording
           }
+        }
       }
     );
     context.subscriptions.push(transcribeCommand);
