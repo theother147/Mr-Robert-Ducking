@@ -2,6 +2,7 @@
 const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
+const { stopRecording, getRecordingStatus } = require("../commands/transcribeCommand");
 
 class ViewProvider {
   constructor(context) {
@@ -12,6 +13,13 @@ class ViewProvider {
   // Create the webview view
   resolveWebviewView(webviewView) {
     this._view = webviewView;
+
+    // Stop recording when the webview is hidden
+    webviewView.onDidChangeVisibility(() => {
+      if (!webviewView.visible) {
+        vscode.commands.executeCommand('rubberduck.transcribe', { force_stop: true });
+      }
+    });
 
     // Set webview options
     webviewView.webview.options = {

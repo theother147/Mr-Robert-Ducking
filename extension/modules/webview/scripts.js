@@ -134,7 +134,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			failedMessageElement.className = "message-failed";
 			const failedMessageContent = document.createElement("span");
 			failedMessageContent.className = "failed-message-text";
-			failedMessageContent.textContent = "Failed to send message";
+			failedMessageContent.textContent = "Failed to send message ";
 			failedMessageElement.appendChild(failedMessageContent);
 			failedMessageElement.appendChild(retryButton);
 			chatHistory.appendChild(failedMessageElement);
