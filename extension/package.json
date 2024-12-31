@@ -44,16 +44,34 @@
 				"title": "Rubber Duck: Attach Context"
 			},
 			{
-				"command": "rubberduck.startRecording",
-				"title": "Rubber Duck: Start Audio Recording"
-			},
-			{
-				"command": "rubberduck.stopRecording",
-				"title": "Rubber Duck: Stop Audio Recording"
+				"command": "rubberduck.transcribe",
+				"title": "Rubber Duck: Start/Stop Voice Recording"
 			},
 			{
 				"command": "rubberduck.newChat",
 				"title": "Rubber Duck: New Chat"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "rubberduck.sendMessage",
+				"key": "ctrl+shift+r s",
+				"mac": "cmd+shift+r s"
+			},
+			{
+				"command": "rubberduck.selectFile",
+				"key": "ctrl+shift+r f",
+				"mac": "cmd+shift+r f"
+			},
+			{
+				"command": "rubberduck.transcribe",
+				"key": "ctrl+shift+r a",
+				"mac": "cmd+shift+r a"
+			},
+			{
+				"command": "rubberduck.newChat",
+				"key": "ctrl+shift+r n",
+				"mac": "cmd+shift+r n"
 			}
 		],
 		"configuration": {
@@ -63,6 +81,11 @@
 					"type": "string",
 					"default": "ws://localhost:8765",
 					"description": "WebSocket server URL"
+				},
+				"rubberduck.wslUrl": {
+					"type": "string",
+					"default": "ws://localhost:8766",
+					"description": "WhisperLive WebSocket server URL"
 				}
 			}
 		}

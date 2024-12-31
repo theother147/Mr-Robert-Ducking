@@ -1,9 +1,11 @@
-# Description: Main entry point for the server. Starts the WebSocket server and listens for incoming requests.
+# Main entry point for the server. Starts the WebSocket server and listens for incoming requests.
+# Handles initialization of core services and graceful shutdown.
+
 import sys
 import asyncio
 from pathlib import Path
 
-# Add server directory to Python path
+# Add server directory to Python path for module imports
 server_dir = Path(__file__).parent
 sys.path.insert(0, str(server_dir))
 
@@ -14,12 +16,13 @@ from modules.api.session import SessionManager
 
 class Core:
     """
-    Core application class that manages service initialization and lifecycle
+    Core application class that manages service initialization and lifecycle.
+    Provides centralized management of LLM and session services.
     """
     def __init__(self):
         logger.info("Initializing application core")
-        self.llm_service = None
-        self.session_manager = None
+        self.llm_service = None  # Language model service instance
+        self.session_manager = None  # Session management service instance
         
     async def initialize(self):
         """Initialize all core services"""
@@ -41,7 +44,11 @@ class Core:
         self.session_manager = None
 
 async def cleanup(api=None, core=None):
-    """Cleanup function to ensure graceful shutdown"""
+    """
+    Cleanup function to ensure graceful shutdown
+    @param api: WebSocket API instance to cleanup
+    @param core: Core services instance to cleanup
+    """
     if api:
         await api.shutdown()
     if core:
@@ -49,6 +56,10 @@ async def cleanup(api=None, core=None):
     logger.info("Server stopped by user.")
 
 async def main():
+    """
+    Main application entry point.
+    Initializes core services and starts the WebSocket server.
+    """
     api = None
     core = None
     try:
@@ -68,7 +79,10 @@ async def main():
         await cleanup(api, core)
 
 async def run_with_cleanup():
-    """Run the main coroutine with proper cleanup on cancellation"""
+    """
+    Run the main coroutine with proper cleanup on cancellation.
+    Handles keyboard interrupts gracefully.
+    """
     try:
         await main()
     except KeyboardInterrupt:

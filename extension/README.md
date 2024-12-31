@@ -12,28 +12,18 @@ Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI
 
 ## Requirements
 
--
-
-## Installation
-
-1. **Clone the Repository**
-
-    Clone the repository to your local machine:
-
-2. **Pack Extension**
-
-3. **Install Extension**
-
--
+- Visual Studio Code ^1.94.0
+- For extension usage:
+  - No additional requirements - everything is handled by the backend server
+- For backend development:
+  - Docker and Docker Compose
+  - Python 3.x (for local development only)
 
 ## Running the Extension
 
--
-
-1. **Use the Rubber Duck AI Assistant**
-
-    - **Open the Assistant Panel**: Click on the Rubber Duck icon in the Activity Bar to open the assistant.
-    - **Interact with the AI**: Use the chat interface to send messages to the AI assistant.
+1. **Open the Assistant**
+    - Click the Rubber Duck icon in the Activity Bar (left sidebar)
+    - The extension will automatically connect to the backend server
 
 ## Usage
 
@@ -41,9 +31,22 @@ Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI
 - **Attaching Code Context**: Click the attach button to add code files or selected text from the editor to provide context.
 - **Voice Commands**: Use the microphone button to start and stop voice input for sending messages.
 
+All actions can be accessed via customizable keyboard shortcuts in VS Code's Keyboard Shortcuts settings (File > Preferences > Keyboard Shortcuts).
+
+## Configuration Connection (optional)
+
+    The extension connects to a hosted backend server by default. If you need to use a different server:
+    1. Open VS Code Settings (Ctrl+,)
+    2. Search for "Rubber Duck"
+    3. Update the following settings if needed:
+       - `rubberduck.webSocketUrl`: WebSocket server URL
+       - `rubberduck.wslUrl`: WhisperLive WebSocket server URL
+
 ## Known Issues
 
--
+- **WebSocket Status Indicator**: The WebSocket connection status indicator may not update correctly until the chat is cleared. As a workaround, press the "New Chat" button to see the current connection status.
+
+- **Audio Transcription Delay**: First-time use of audio transcription may experience longer waiting times while the model is being loaded. Subsequent uses will be faster.
 
 ## Contributing
 

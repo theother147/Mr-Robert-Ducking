@@ -1,40 +1,58 @@
-const { startRecording, stopRecording, getRecordingStatus } = require("./modules/commands/recordingCommands");
+/**
+ * Main extension module that initializes and manages the VS Code extension.
+ * Handles the setup of WebSocket connections, command registration, and UI components.
+ */
+
+const { startRecording, stopRecording, getRecordingStatus } = require("./modules/commands/transcribeCommand");
 const selectFile = require("./modules/commands/selectFileCommand");
 const sendMessageToWs = require("./modules/commands/sendMessageCommand");
 const vscode = require("vscode");
 const { exec } = require("child_process");
 const { WebSocketManager } = require("./modules/websocket");
+const { WhisperliveWebSocketManager } = require("./modules/websocketWhisperLive");
 const { ViewProvider } = require("./modules/webview/webview");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 const { getPythonExecutablePath } = require("./modules/utils");
 
+// Global instances for managing WebSocket connections and UI
 let wsManager;
 let provider;
 let transcriptionServer;
+let wslManager;
 
 /**
- * @param {vscode.ExtensionContext} context
+ * Activates the extension and sets up all necessary components
+ * @param {vscode.ExtensionContext} context - The VS Code extension context
  */
 function activate(context) {
   try {
-    // Start Whisper server
+    // Start Python-based transcription server
     const pythonExecutablePath = getPythonExecutablePath();
-    const scriptPath = path.join(__dirname, "python", "run_server.py");
+    const scriptPath = path.join(__dirname, "python", "client.py");
     transcriptionServer = spawn(pythonExecutablePath, ["-u", scriptPath]);
 
-    wsManager = new WebSocketManager(); // Initialize WebSocket manager
-    provider = new ViewProvider(context); // Initialize webview provider
-    wsManager.setProvider(provider); // Share provider with WebSocket module
-    wsManager.connect(); // Connect to WebSocket server
+    // Initialize WebSocket managers for chat and transcription
+    wsManager = new WebSocketManager();
+    provider = new ViewProvider(context);
+    wsManager.setProvider(provider);
+    wsManager.connect();
 
-    // Register the webview provider to create UI
+    // Initialize WhisperLive WebSocket manager for transcription
+    wslManager = new WhisperliveWebSocketManager();
+    wslManager.setProvider(provider);
+    wslManager.connect();
+
+    // Register the webview provider for UI
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider("rubberduck.view", provider)
     );
 
-    // Check webview visibility
+    /**
+     * Helper function to verify webview visibility before executing commands
+     * @returns {boolean} Whether the webview is visible
+     */
     function checkWebviewVisible() {
       if (!provider.isWebviewVisible()) {
         vscode.window.showInformationMessage(
@@ -45,7 +63,7 @@ function activate(context) {
       return true;
     }
 
-    // Register command to send messages to WebSocket server
+    // Register command for sending messages to WebSocket server
     let sendMessageCommand = vscode.commands.registerCommand(
       "rubberduck.sendMessage",
       (messageData) => {
@@ -53,12 +71,12 @@ function activate(context) {
           if (messageData) {
             sendMessageToWs(messageData, wsManager, provider);
           } else {
-            // Don't allow sending messages while recording is in progress
+            // Prevent sending messages during recording
             if (getRecordingStatus()) {
               vscode.window.showInformationMessage("Cannot send messages while recording is in progress"); 
               return;
             }
-            // Trigger send message from webview if no message data is provided
+            // Trigger send message from webview
             provider._view.webview.postMessage({
               command: "triggerSend"
             });
@@ -68,29 +86,24 @@ function activate(context) {
     );
     context.subscriptions.push(sendMessageCommand);
 
-    // Register command to start recording
-    let startRecordingCommand = vscode.commands.registerCommand(
-      "rubberduck.startRecording",
-      () => {
-        if (checkWebviewVisible()) {
-          startRecording(provider);
+    // Register command for controlling audio transcription
+    let transcribeCommand = vscode.commands.registerCommand(
+      "rubberduck.transcribe",
+      (options = {}) => {
+        if (options.force_stop) {
+          stopRecording(provider, wslManager); // Stop recording if forced
+        } else {
+          if (checkWebviewVisible() && !getRecordingStatus()) {
+              startRecording(provider, wslManager); // Start recording if not already recording
+          } else {
+            stopRecording(provider, wslManager); // Stop recording if already recording
+          }
         }
       }
     );
-    context.subscriptions.push(startRecordingCommand);
+    context.subscriptions.push(transcribeCommand);
 
-    // Register command to stop recording
-    let stopRecordingCommand = vscode.commands.registerCommand(
-      "rubberduck.stopRecording",
-      () => {
-        if (checkWebviewVisible()) {
-          stopRecording(provider);
-        }
-      }
-    );
-    context.subscriptions.push(stopRecordingCommand);
-
-    // Register command to select and read file
+    // Register command for file selection
     let selectFileCommand = vscode.commands.registerCommand(
       "rubberduck.selectFile",
       () => {
@@ -101,28 +114,27 @@ function activate(context) {
     );
     context.subscriptions.push(selectFileCommand);
 
-    // Register command to begin new chat session
+    // Register command for starting new chat sessions
     let newChatCommand = vscode.commands.registerCommand(
       "rubberduck.newChat",
       () => {
         if (checkWebviewVisible()) {
-
-          // Don't allow starting new chat while recording is in progress
+          // Prevent new chat during recording
           if (getRecordingStatus()) {
             vscode.window.showInformationMessage("Cannot start new chat while recording is in progress"); 
             return;
           }
 
-          // Notify webview to clear chat history
+          // Clear chat history in webview
           provider._view.webview.postMessage({
             command: 'clearChat'
           });
 
-          // Close and re-open WebSocket connection
+          // Restart WebSocket connection
           wsManager.closeConnection();
           setTimeout(() => {
             wsManager.connect();
-          }, 1000); // 1-second delay
+          }, 1000);
         }
       }
     );
@@ -136,13 +148,18 @@ function activate(context) {
   }
 }
 
+/**
+ * Deactivates the extension and cleans up resources
+ */
 function deactivate() {
-	if (wsManager) {
-		wsManager.close_connection();
-	}
-	if (transcriptionServer) {
-		transcriptionServer.kill("SIGKILL");
-	}
+  // Close WebSocket connections
+  if (wsManager) {
+    wsManager.close_connection();
+  }
+  // Terminate transcription server
+  if (transcriptionServer) {
+    transcriptionServer.kill("SIGKILL");
+  }
 }
 
 module.exports = {

@@ -134,7 +134,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			failedMessageElement.className = "message-failed";
 			const failedMessageContent = document.createElement("span");
 			failedMessageContent.className = "failed-message-text";
-			failedMessageContent.textContent = "Failed to send message";
+			failedMessageContent.textContent = "Failed to send message ";
 			failedMessageElement.appendChild(failedMessageContent);
 			failedMessageElement.appendChild(retryButton);
 			chatHistory.appendChild(failedMessageElement);
@@ -218,8 +218,8 @@ window.addEventListener('DOMContentLoaded', () => {
 				updateChat(aiName, message.text);
 				break;
 
-			case "recording":
-				messageInput.value += message.text;
+			case "transcription":
+				messageInput.value = message.text;
 				vscode.setState({ messageInputState: messageInput.value });
 				adjustInputHeight();
 				break;
@@ -261,7 +261,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Record button functionality
     recordButton.addEventListener('click', async () => {
 		vscode.postMessage({ 
-			command: isRecording ? 'stopRecording' : 'startRecording' 
+			command: "transcribe",
 		});
     });
 
