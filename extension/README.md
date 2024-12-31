@@ -1,65 +1,57 @@
-# rubberduck README
+# Rubber Duck AI Assistant
 
-This is the README for your extension "rubberduck". After writing up a brief description, we recommend including the following sections.
+Rubber Duck AI Assistant is a Visual Studio Code extension that integrates an AI-powered coding assistant directly into your editor. It allows you to interact with an AI to get help with coding tasks, ask questions about your code, and enhance your productivity.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **AI-Powered Chat**: Engage in conversations with the AI assistant within VS Code.
+- **Code Context Attachment**: Attach code files or snippets to provide context to the AI.
+- **Voice Input Support**: Use voice commands to interact with the assistant.
+- **Interactive Chat History**: Keep track of your conversations with the AI.
+- **Syntax Highlighting**: Enjoy improved readability with syntax-highlighted code in responses.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Visual Studio Code ^1.94.0
+- For extension usage:
+  - No additional requirements - everything is handled by the backend server
+- For backend development:
+  - Docker and Docker Compose
+  - Python 3.x (for local development only)
 
-## Extension Settings
+## Running the Extension
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+1. **Open the Assistant**
+    - Click the Rubber Duck icon in the Activity Bar (left sidebar)
+    - The extension will automatically connect to the backend server
 
-For example:
+## Usage
 
-This extension contributes the following settings:
+- **Sending Messages**: Type your message in the input box and press the send button or hit Enter.
+- **Attaching Code Context**: Click the attach button to add code files or selected text from the editor to provide context.
+- **Voice Commands**: Use the microphone button to start and stop voice input for sending messages.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+All actions can be accessed via customizable keyboard shortcuts in VS Code's Keyboard Shortcuts settings (File > Preferences > Keyboard Shortcuts).
+
+## Configuration Connection (optional)
+
+    The extension connects to a hosted backend server by default. If you need to use a different server:
+    1. Open VS Code Settings (Ctrl+,)
+    2. Search for "Rubber Duck"
+    3. Update the following settings if needed:
+       - `rubberduck.webSocketUrl`: WebSocket server URL
+       - `rubberduck.wslUrl`: WhisperLive WebSocket server URL
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- **WebSocket Status Indicator**: The WebSocket connection status indicator may not update correctly until the chat is cleared. As a workaround, press the "New Chat" button to see the current connection status.
 
-## Release Notes
+- **Audio Transcription Delay**: First-time use of audio transcription may experience longer waiting times while the model is being loaded. Subsequent uses will be faster.
 
-Users appreciate release notes as you update your extension.
+## Contributing
 
-### 1.0.0
+Contributions are welcome. Please open issues for any bugs or feature requests and submit pull requests for improvements.
 
-Initial release of ...
+## License
 
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+This project is licensed under the MIT License.

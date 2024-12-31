@@ -1,0 +1,45 @@
+services:
+  whisperlive:
+    build:
+      context: ./whisperLive_server
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./whisperLive_server:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./server:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  ollama:
+    hostname: ollama
+    image: ollama/ollama:latest
+    volumes:
+        - ./ollama/entrypoint.sh:/entrypoint.sh
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+    ports:
+        - "11434:11434"
+    deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: 1
+                  capabilities: [gpu]

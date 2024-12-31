@@ -1,52 +1,80 @@
-// Description: Module for handling WebSocket communication
+/**
+ * WebSocket manager module for handling real-time communication.
+ * Manages connection, reconnection, and message handling between the extension and server.
+ */
+
 const vscode = require("vscode");
 const WebSocket = require("ws");
+const marked = require('marked');
 
+/**
+ * WebSocketManager class handles all WebSocket-related operations
+ * including connection management, message sending/receiving, and error handling.
+ */
 class WebSocketManager {
 	constructor() {
+		// WebSocket connection and configuration
 		this._ws = null;
 		this._wsUrl = vscode.workspace
 			.getConfiguration("rubberduck")
-			.get("webSocketUrl", "ws://localhost:8765"); // Get WebSocket URL from the configuration (package.json)
-		this._isConnecting = false; // Flag to indicate if WebSocket is connecting
-		this._reconnectDelay = 5000; // Reconnect delay in milliseconds
-		this._resendDelay = 1000; // Resend delay in milliseconds
-		this._pendingMessage = null; // Pending message to be sent
-		this._resendAttempt = 0; // Number of resend attempts
-		this._maxResendAttempts = 2; // Maximum number of resend attempts
-		this._provider = null; // Reference to webview provider
+			.get("webSocketUrl", "ws://localhost:8765");
+		
+		// Connection state management
+		this._isConnecting = false;
+		this._reconnectDelay = 5000;
+		this._resendDelay = 1000;
+		
+		// Message handling state
+		this._pendingMessage = null;
+		this._resendAttempt = 0;
+		this._maxResendAttempts = 2;
+		
+		// UI reference
+		this._provider = null;
 	}
 
-	// Share webview provider with WebSocket module
-	set_provider(provider) {
+	/**
+	 * Sets the webview provider for UI updates
+	 * @param {ViewProvider} provider - The webview provider instance
+	 */
+	setProvider(provider) {
 		this._provider = provider;
 	}
 
-	// Connect to WebSocket server
+	/**
+	 * Initiates WebSocket connection if not already connected
+	 */
 	connect() {
 		if (
 			this._isConnecting ||
 			(this._ws && this._ws.readyState === WebSocket.OPEN)
 		) {
-			return; // Do not connect if WebSocket is already connecting or connected
+			return;
 		}
 
-		this._isConnecting = true; // Set the flag to indicate that the WebSocket is connecting
-		this._ws = new WebSocket(this._wsUrl); // Create a new WebSocket instance
-		this.event_handlers(); // Setup WebSocket event handlers
+		this._isConnecting = true;
+		this._ws = new WebSocket(this._wsUrl);
+		this.eventHandlers();
 	}
 
-	// Reconnect to WebSocket server
+	/**
+	 * Handles reconnection attempts with delay
+	 */
 	reconnect() {
 		setTimeout(() => {
 			console.log("WebSocket: Reconnecting...");
-			this._isConnecting = false; // Reset connecting flag
+			this._isConnecting = false;
 			this.connect();
-		}, this._reconnectDelay); // Reconnect after a delay
+		}, this._reconnectDelay);
 	}
 
-	// Notify webview about the connection status
-	notify_webview(statusType, currentStatus, message = null) {
+	/**
+	 * Updates the webview with connection status
+	 * @param {string} statusType - Type of status update
+	 * @param {boolean} currentStatus - Current connection status
+	 * @param {string} message - Optional status message
+	 */
+	notifyWebview(statusType, currentStatus, message = null) {
 		if (this._provider && this._provider._view) {
 			const payload = {
 				command: statusType,
@@ -59,25 +87,30 @@ class WebSocketManager {
 		}
 	}
 
-	// Resend pending messages
-	resend_message() {
+	/**
+	 * Attempts to resend failed messages
+	 */
+	resendMessage() {
 		if (this._resendAttempt < this._maxResendAttempts) {
-			this._resendAttempt++; // Increment resend attempt counter
+			this._resendAttempt++;
 			setTimeout(() => {
-				this.send_message(); // Resend the message
-			}, this._resendDelay); // Resend after a delay
+				this.sendMessage();
+			}, this._resendDelay);
 		} else {
 			console.error(
 				"WebSocket: Maximum resend attempts reached. Message not sent."
 			);
-			this._resendAttempt = 0; // Reset resend attempt counter
-			this.notify_webview("sendFailed", true, this._pendingMessage); // Notify webview about send failure
+			this._resendAttempt = 0;
+			this.notifyWebview("sendFailed", true, this._pendingMessage);
 		}
 	}
 
-	// Send message to WebSocket server
-	send_message(message) {
-		// Store message on first attempt
+	/**
+	 * Sends a message through the WebSocket connection
+	 * @param {Object} message - Message to be sent
+	 */
+	sendMessage(message) {
+		// Store new message or use pending message for retries
 		if (this._resendAttempt === 0 && message.retry !== true) {
 			this._pendingMessage = {
 				type: "text",
@@ -97,76 +130,92 @@ class WebSocketManager {
 			try {
 				this._ws.send(JSON.stringify(this._pendingMessage));
 				console.log("WebSocket: Message sent:", this._pendingMessage);
-				this._resendAttempt = 0; // Reset resend attempt counter
-				this.notify_webview("sendSuccess", true);
+				this._resendAttempt = 0;
+				this.notifyWebview("sendSuccess", true);
 			} catch (error) {
 				console.error(`WebSocket: Failed to send message:`, error);
-				this.resend_message();
+				this.resendMessage();
 			}
 		} else {
 			console.error("WebSocket: Not connected, message not sent");
-			this.resend_message();
+			this.resendMessage();
 		}
 	}
 
-	// Handle WebSocket connection
-	handle_connection() {
+	/**
+	 * Handles successful WebSocket connection
+	 */
+	handleConnection() {
 		console.log("WebSocket: Connected");
-		this._isConnecting = false; // Reset connecting flag
-		this.notify_webview("wsStatus", true); // Notify webview about connection status
+		this._isConnecting = false;
+		this.notifyWebview("wsStatus", true);
 	}
 
-	// Handle WebSocket disconnection
-	handle_disconnection() {
+	/**
+	 * Handles WebSocket disconnection and initiates reconnection
+	 */
+	handleDisconnection() {
 		console.log("WebSocket: Disconnected");
-		this._isConnecting = false; // Reset connecting flag
-		this.notify_webview("wsStatus", false); // Notify webview about connection status
-		this.reconnect(); // Reconnect to WebSocket server
+		this._isConnecting = false;
+		this.notifyWebview("wsStatus", false);
+		this.reconnect();
 	}
 
-	// Handle WebSocket connection error
-	handle_error(error) {
+	/**
+	 * Handles WebSocket errors
+	 * @param {Error} error - The error object
+	 */
+	handleError(error) {
 		console.error("WebSocket error:", error);
 	}
 
-	// Handle incoming messages from the WebSocket server
-	handle_message(data) {
-		// Convert buffer to string
-		const messageString = data.toString(); // Convert buffer to string
-		const message = JSON.parse(messageString); // Try to parse the string as JSON
+	/**
+	 * Processes incoming WebSocket messages
+	 * @param {Buffer} data - Raw message data
+	 */
+	handleMessage(data) {
+		const messageString = data.toString();
+		const message = JSON.parse(messageString);
 		console.log("WebSocket: Received message:", message);
 
-		// Send to webview
+		// Convert markdown content to HTML
+		const htmlContent = marked.parse(message.message);
+
+		// Forward to webview
 		if (this._provider && this._provider._view) {
-			console.log("WebSocket: Sending message to webview:", message.message);
+			console.log("WebSocket: Sending message to webview:", htmlContent);
 			this._provider._view.webview.postMessage({
 				command: "receiveMessage",
-				text: message.message,
+				text: htmlContent,
 			});
 		}
 	}
 
-	// Setup WebSocket event handlers
-	event_handlers() {
+	/**
+	 * Sets up WebSocket event handlers
+	 */
+	eventHandlers() {
 		this._ws.on("open", async () => {
-			this.handle_connection(); // Handle WebSocket connection
+			this.handleConnection();
 		});
 
 		this._ws.on("close", () => {
-			this.handle_disconnection(); // Handle WebSocket disconnection
+			this.handleDisconnection();
 		});
 
 		this._ws.on("error", (error) => {
-			this.handle_error(error); // Handle WebSocket connection error
+			this.handleError(error);
 		});
 
 		this._ws.on("message", (data) => {
-			this.handle_message(data); // Handle incoming messages from the WebSocket server
+			this.handleMessage(data);
 		});
 	}
 
-	// Close WebSocket connection
-	close_connection() {
+	/**
+	 * Closes the WebSocket connection
+	 */
+	closeConnection() {
 		if (this._ws) {
 			this._ws.close();
 		}
