@@ -3,7 +3,7 @@
 	"displayName": "Rubber Duck AI Assistant",
 	"description": "AI-powered debugging assistant for VS Code",
 	"publisher": "Softwaretechnik-Labor",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"icon": "resources/icon_extension.png",
 	"engines": {
 		"vscode": "^1.94.0"
