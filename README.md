@@ -102,6 +102,7 @@ This project is licensed under the MIT License.
     
 
     # Install vsce globally
+    cd ..
     npm install -g @vscode/vsce
 
     # Build the VSIX package
